@@ -112,10 +112,11 @@ void mdomSteppingAction::UserSteppingAction(const G4Step* aStep)
     }
   }
   
-  
+
   if ( aTrack-> GetCurrentStepNumber() > 50000) {
-    //G4cout << "Al infinito y mas alla!!!!!" << G4endl;
+    G4cout << "Al infinito y mas alla!!!!!" << G4endl;
     // gAnalysisManager.infiniteLoop = true;
+    //gAnalysisManager.SaveThisEvent = true;
     if ( aTrack->GetTrackStatus() != fStopAndKill ) {
       aTrack->SetTrackStatus(fStopAndKill);
     }
@@ -129,9 +130,11 @@ void mdomSteppingAction::UserSteppingAction(const G4Step* aStep)
     //     if (aTrack->GetNextVolume()==0) {
     //   		    gAnalysisManager.OutOfWorldCounter++;
     //   		  }
+    
     if ( aTrack->GetTrackStatus() != fStopAndKill ) {
+
       if ( (aStep->GetPostStepPoint()->GetMaterial()->GetName() == "Photocathode")&&(aTrack->GetTrackStatus() != fStopAndKill ) ) {
-	
+
 	G4double h = 4.136E-15*eV*s;
 	G4double c = 2.99792458E17*nm/s;
 	G4double lambda;

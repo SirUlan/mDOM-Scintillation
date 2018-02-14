@@ -28,7 +28,7 @@
 //since Geant4.10: include units manually
 #include "G4SystemOfUnits.hh"
 // #include "G4Cache.hh"
-
+#include "G4UImanager.hh"
 // extern G4String ghitsfilename;
 // extern G4String	gabsfilename;
 // extern G4String	greffilename;
@@ -51,6 +51,8 @@ extern G4double gscintYield;
 extern G4double gscintTimeConst;
 extern G4double gscintSpectrum;
 extern G4double gTemperature;
+extern G4double gdistanceToSource;
+extern G4double gSourceRadius;
 
 extern std::vector<double> readColumnDouble (G4String fn, int col);
 extern std::vector<G4String> explode (G4String s, char d);
@@ -88,7 +90,6 @@ mdomDetectorConstruction::~mdomDetectorConstruction()
 
 const G4int NUMENTRIES_ICE = 61;
 const G4int NUMENTRIES_DEPTH = 110;
-
 
 G4double ENERGY_spice[NUMENTRIES_ICE] = {
   1.56962*eV, 1.58974*eV, 1.61039*eV, 1.63157*eV,
@@ -412,67 +413,258 @@ G4VPhysicalVolume* mdomDetectorConstruction::Construct() {
   // latest simulations provided by Almeco, 
   // coating of Vega material enhances refelctivity at desired wavelength, effect depends on n of surroundig material
   // V95 in air
-  DataFile = "../Detector_construction_files/Reflectivity/V95_in_air.txt";   
+  G4double V95AirPhotonEnergy[28] = {
+    
+    hc_eVnm / 150.0*eV,
+    hc_eVnm / 200.0*eV,
+    hc_eVnm / 225.0*eV,
+    hc_eVnm / 250.0*eV,
+    hc_eVnm / 259.0*eV,
+    hc_eVnm / 270.5*eV,
+    hc_eVnm / 281.9*eV,
+    hc_eVnm / 295.0*eV,
+    hc_eVnm / 303.2*eV,
+    hc_eVnm / 317.1*eV,
+    hc_eVnm / 323.6*eV,
+    hc_eVnm / 329.4*eV,
+    hc_eVnm / 332.7*eV,
+    hc_eVnm / 335.1*eV,
+    hc_eVnm / 336.7*eV,
+    hc_eVnm / 340.8*eV,
+    hc_eVnm / 344.9*eV,
+    hc_eVnm / 348.2*eV,
+    hc_eVnm / 350.7*eV,
+    hc_eVnm / 358.0*eV,
+    hc_eVnm / 372.8*eV,
+    hc_eVnm / 399.8*eV,
+    hc_eVnm / 449.7*eV,
+    hc_eVnm / 499.6*eV,
+    hc_eVnm / 598.6*eV,
+    hc_eVnm / 648.5*eV,
+    hc_eVnm / 698.4*eV,
+    hc_eVnm / 730*eV
+  };
   
-  fileFirstColumn = readColumnDouble(DataFile, 1);
-  fileSecondColumn = readColumnDouble(DataFile, 2);  
-  
-  G4double V95AirPhotonEnergy[28];
-  G4double V95AirReflectivity[28];
-  std::copy(fileFirstColumn.begin(), fileFirstColumn.end(), V95AirPhotonEnergy);
-  std::copy(fileSecondColumn.begin(), fileSecondColumn.end(), V95AirReflectivity);
-  
-  for (unsigned int u = 0; u <fileFirstColumn.size(); u++) {
-    V95AirPhotonEnergy[u] = hc_eVnm /  V95AirPhotonEnergy[u] *eV;   
-  }
+  G4double V95AirReflectivity[28] = {
+    
+    0.000,
+    0.071,
+    0.117,
+    0.265,
+    0.277,
+    0.277,
+    0.269,
+    0.263,
+    0.245,
+    0.180,
+    0.166,
+    0.182,
+    0.215,
+    0.261,
+    0.315,
+    0.488,
+    0.695,
+    0.813,
+    0.865,
+    0.908,
+    0.946,
+    0.964,
+    0.968,
+    0.966,
+    0.944,
+    0.928,
+    0.898,
+    0.849
+  };
   
   // V95 in gel
+  G4double V95GelPhotonEnergy[27] = {
+    
+    hc_eVnm / 150.0*eV,
+    hc_eVnm / 200.0*eV,
+    hc_eVnm / 225.0*eV,
+    hc_eVnm / 250.0*eV,
+    hc_eVnm / 259.0*eV,
+    hc_eVnm / 269.6*eV,
+    hc_eVnm / 281.9*eV,
+    hc_eVnm / 290.9*eV,
+    hc_eVnm / 309.7*eV,
+    hc_eVnm / 314.6*eV,
+    hc_eVnm / 322.0*eV,
+    hc_eVnm / 328.6*eV,
+    hc_eVnm / 333.5*eV,
+    hc_eVnm / 336.7*eV,
+    hc_eVnm / 341.7*eV,
+    hc_eVnm / 349.0*eV,
+    hc_eVnm / 353.1*eV,
+    hc_eVnm / 363.3*eV,
+    hc_eVnm / 380.9*eV,
+    hc_eVnm / 398.9*eV,
+    hc_eVnm / 449.7*eV,
+    hc_eVnm / 499.6*eV,
+    hc_eVnm / 549.5*eV,
+    hc_eVnm / 599.0*eV,
+    hc_eVnm / 648.9*eV,
+    hc_eVnm / 698.9*eV,
+    hc_eVnm / 730*eV
+  };
   
-  DataFile = "../Detector_construction_files/Reflectivity/V95_in_gel.txt";   
+  G4double V95GelReflectivity[27] = {
+    
+    0.000,
+    0.071,
+    0.117,
+    0.206,
+    0.215,
+    0.205,
+    0.184,
+    0.180,
+    0.132,
+    0.104,
+    0.095,
+    0.116,
+    0.184,
+    0.301,
+    0.500,
+    0.801,
+    0.855,
+    0.906,
+    0.940,
+    0.952,
+    0.958,
+    0.954,
+    0.946,
+    0.932,
+    0.916,
+    0.893,
+    0.857
+  };
   
-  fileFirstColumn = readColumnDouble(DataFile, 1);
-  fileSecondColumn = readColumnDouble(DataFile, 2);  
-
-  G4double V95GelPhotonEnergy[27];
-  G4double V95GelReflectivity[27];
-  std::copy(fileFirstColumn.begin(), fileFirstColumn.end(), V95GelPhotonEnergy);
-  std::copy(fileSecondColumn.begin(), fileSecondColumn.end(), V95GelReflectivity);
-  
-  for (unsigned int u = 0; u <fileFirstColumn.size(); u++) {
-    V95GelPhotonEnergy[u] = hc_eVnm /  V95GelPhotonEnergy[u] *eV;   
-  }
-   
   // V98 in air
-  DataFile = "../Detector_construction_files/Reflectivity/V98_in_air.txt";   
+  G4double V98AirPhotonEnergy[26] = {
+    
+    hc_eVnm / 150.0*eV,
+    hc_eVnm / 200.0*eV,
+    hc_eVnm / 225.0*eV,
+    hc_eVnm / 249.6*eV,
+    hc_eVnm / 261.9*eV,
+    hc_eVnm / 278.3*eV,
+    hc_eVnm / 294.7*eV,
+    hc_eVnm / 308.7*eV,
+    hc_eVnm / 319.8*eV,
+    hc_eVnm / 329.2*eV,
+    hc_eVnm / 333.7*eV,
+    hc_eVnm / 339.1*eV,
+    hc_eVnm / 341.5*eV,
+    hc_eVnm / 345.6*eV,
+    hc_eVnm / 348.9*eV,
+    hc_eVnm / 356.3*eV,
+    hc_eVnm / 362.9*eV,
+    hc_eVnm / 376.8*eV,
+    hc_eVnm / 399.4*eV,
+    hc_eVnm / 436.0*eV,
+    hc_eVnm / 468.8*eV,
+    hc_eVnm / 530.4*eV,
+    hc_eVnm / 600.2*eV,
+    hc_eVnm / 649.4*eV,
+    hc_eVnm / 716.7*eV,
+    hc_eVnm / 730*eV
+  };
   
-  fileFirstColumn = readColumnDouble(DataFile, 1);
-  fileSecondColumn = readColumnDouble(DataFile, 2);  
-
-  G4double V98AirPhotonEnergy[26];
-  G4double V98AirReflectivity[26];
-  std::copy(fileFirstColumn.begin(), fileFirstColumn.end(), V98AirPhotonEnergy);
-  std::copy(fileSecondColumn.begin(), fileSecondColumn.end(), V98AirReflectivity);
-  
-  for (unsigned int u = 0; u <fileFirstColumn.size(); u++) {
-    V98AirPhotonEnergy[u] = hc_eVnm /  V98AirPhotonEnergy[u] *eV;   
-  }
+  G4double V98AirReflectivity[26] = {
+    
+    0.000,
+    0.102,
+    0.118,
+    0.306,
+    0.320,
+    0.316,
+    0.316,
+    0.294,
+    0.246,
+    0.151,
+    0.058,
+    0.024,
+    0.099,
+    0.302,
+    0.500,
+    0.703,
+    0.815,
+    0.877,
+    0.941,
+    0.965,
+    0.975,
+    0.982,
+    0.982,
+    0.978,
+    0.972,
+    0.971
+  };
   
   // V98 in gel
-  DataFile = "../Detector_construction_files/Reflectivity/V98_in_gel.txt";   
+  G4double V98GelPhotonEnergy[28] = {
+    
+    hc_eVnm / 150.0*eV,
+    hc_eVnm / 200.0*eV,
+    hc_eVnm / 225.0*eV,
+    hc_eVnm / 248.8*eV,
+    hc_eVnm / 259.4*eV,
+    hc_eVnm / 270.1*eV,
+    hc_eVnm / 286.5*eV,
+    hc_eVnm / 304.6*eV,
+    hc_eVnm / 319.4*eV,
+    hc_eVnm / 325.1*eV,
+    hc_eVnm / 331.3*eV,
+    hc_eVnm / 335.8*eV,
+    hc_eVnm / 340.3*eV,
+    hc_eVnm / 343.6*eV,
+    hc_eVnm / 347.7*eV,
+    hc_eVnm / 352.2*eV,
+    hc_eVnm / 356.3*eV,
+    hc_eVnm / 365.4*eV,
+    hc_eVnm / 391.6*eV,
+    hc_eVnm / 401.5*eV,
+    hc_eVnm / 413.0*eV,
+    hc_eVnm / 440.1*eV,
+    hc_eVnm / 477.8*eV,
+    hc_eVnm / 522.2*eV,
+    hc_eVnm / 599.3*eV,
+    hc_eVnm / 650.2*eV,
+    hc_eVnm / 699.5*eV,
+    hc_eVnm / 730*eV
+  };
   
-  fileFirstColumn = readColumnDouble(DataFile, 1);
-  fileSecondColumn = readColumnDouble(DataFile, 2);  
-
-  
-  G4double V98GelPhotonEnergy[28];
-  G4double V98GelReflectivity[28];
-  std::copy(fileFirstColumn.begin(), fileFirstColumn.end(), V98GelPhotonEnergy);
-  std::copy(fileSecondColumn.begin(), fileSecondColumn.end(), V98GelReflectivity);
-  
-    for (unsigned int u = 0; u <fileFirstColumn.size(); u++) {
-    V98GelPhotonEnergy[u] = hc_eVnm /  V98GelPhotonEnergy[u] *eV;   
-  }
-  
+  G4double V98GelReflectivity[28] = {
+    
+    0.000,
+    0.102,
+    0.118,
+    0.243,
+    0.250,
+    0.239,
+    0.222,
+    0.193,
+    0.139,
+    0.085,
+    0.035,
+    0.014,
+    0.073,
+    0.160,
+    0.422,
+    0.598,
+    0.705,
+    0.799,
+    0.901,
+    0.927,
+    0.933,
+    0.953,
+    0.967,
+    0.972,
+    0.974,
+    0.974,
+    0.972,
+    0.970
+  };
   
   // Total98
   // hypopthetical material with R = 98% for all wavelengths, inpored by CTA ligth concentrators with additinal coating
@@ -614,168 +806,990 @@ G4VPhysicalVolume* mdomDetectorConstruction::Construct() {
   Mat_BiAlkali->SetMaterialPropertiesTable(proptable_BiAlkali);
   
   // ------------------------------ tube glass -------------------------------------------------------------
-  DataFile = "../Detector_construction_files/Refractive_index/Tube_glass.txt";   
   
-  fileFirstColumn = readColumnDouble(DataFile, 1);
-  fileSecondColumn = readColumnDouble(DataFile, 2);  
-  G4double TubeGlassRIndPhotonEnergy[59];
-  G4double TubeGlassRInd[59];
-  std::copy(fileFirstColumn.begin(), fileFirstColumn.end(), TubeGlassRIndPhotonEnergy);
-  std::copy(fileSecondColumn.begin(), fileSecondColumn.end(), TubeGlassRInd);
+  G4double TubeGlassRIndPhotonEnergy[59] = {
+    
+    hc_eVnm / 150*eV,
+    hc_eVnm / 160*eV,
+    hc_eVnm / 170*eV,
+    hc_eVnm / 180*eV,
+    hc_eVnm / 190*eV,
+    hc_eVnm / 200*eV,
+    hc_eVnm / 210*eV,
+    hc_eVnm / 220*eV,
+    hc_eVnm / 230*eV,
+    hc_eVnm / 240*eV,
+    hc_eVnm / 250*eV,
+    hc_eVnm / 260*eV,
+    hc_eVnm / 270*eV,
+    hc_eVnm / 280*eV,
+    hc_eVnm / 290*eV,
+    hc_eVnm / 300*eV,
+    hc_eVnm / 310*eV,
+    hc_eVnm / 320*eV,
+    hc_eVnm / 330*eV,
+    hc_eVnm / 340*eV,
+    hc_eVnm / 350*eV,
+    hc_eVnm / 360*eV,
+    hc_eVnm / 370*eV,
+    hc_eVnm / 380*eV,
+    hc_eVnm / 390*eV,
+    hc_eVnm / 400*eV,
+    hc_eVnm / 410*eV,
+    hc_eVnm / 420*eV,
+    hc_eVnm / 430*eV,
+    hc_eVnm / 440*eV,
+    hc_eVnm / 450*eV,
+    hc_eVnm / 460*eV,
+    hc_eVnm / 470*eV,
+    hc_eVnm / 480*eV,
+    hc_eVnm / 490*eV,
+    hc_eVnm / 500*eV,
+    hc_eVnm / 510*eV,
+    hc_eVnm / 520*eV,
+    hc_eVnm / 530*eV,
+    hc_eVnm / 540*eV,
+    hc_eVnm / 550*eV,
+    hc_eVnm / 560*eV,
+    hc_eVnm / 570*eV,
+    hc_eVnm / 580*eV,
+    hc_eVnm / 590*eV,
+    hc_eVnm / 600*eV,
+    hc_eVnm / 610*eV,
+    hc_eVnm / 620*eV,
+    hc_eVnm / 630*eV,
+    hc_eVnm / 640*eV,
+    hc_eVnm / 650*eV,
+    hc_eVnm / 660*eV,
+    hc_eVnm / 670*eV,
+    hc_eVnm / 680*eV,
+    hc_eVnm / 690*eV,
+    hc_eVnm / 700*eV,
+    hc_eVnm / 710*eV,
+    hc_eVnm / 720*eV,
+    hc_eVnm / 730*eV
+  };
   
-  for (unsigned int u = 0; u <fileFirstColumn.size(); u++) {
-    TubeGlassRIndPhotonEnergy[u] = hc_eVnm /  TubeGlassRIndPhotonEnergy[u] *eV;   
-  }
-
+  G4double TubeGlassRInd[59] = {
+    
+    1.7371,
+    1.6932,
+    1.6603,
+    1.6349,
+    1.6149,
+    1.5987,
+    1.5855,
+    1.5744,
+    1.5651,
+    1.5572,
+    1.5504,
+    1.5445,
+    1.5394,
+    1.5348,
+    1.5308,
+    1.5273,
+    1.5241,
+    1.5213,
+    1.5187,
+    1.5164,
+    1.5143,
+    1.5123,
+    1.5106,
+    1.5090,
+    1.5075,
+    1.5061,
+    1.5049,
+    1.5037,
+    1.5026,
+    1.5016,
+    1.5007,
+    1.4998,
+    1.4990,
+    1.4983,
+    1.4976,
+    1.4969,
+    1.4963,
+    1.4957,
+    1.4951,
+    1.4946,
+    1.4941,
+    1.4937,
+    1.4932,
+    1.4928,
+    1.4924,
+    1.4920,
+    1.4917,
+    1.4913,
+    1.4910,
+    1.4907,
+    1.4904,
+    1.4901,
+    1.4899,
+    1.4896,
+    1.4894,
+    1.4891,
+    1.4889,
+    1.4887,
+    1.4885
+  };
   
   // --------------------- general energies for refractive indices -----------------------------------------		
-  
-  DataFile = "../Detector_construction_files/Refractive_index/General_energies.txt";  
-  fileFirstColumn = readColumnDouble(DataFile, 1);
-  G4double GeneralRIndPhotonEnergy[49];
-  std::copy(fileFirstColumn.begin(), fileFirstColumn.end(), GeneralRIndPhotonEnergy);
-  
-  for (unsigned int u = 0; u <fileFirstColumn.size(); u++) {
-    GeneralRIndPhotonEnergy[u] = hc_eVnm / GeneralRIndPhotonEnergy[u] *eV;   
-  }
-  
-  
-  
+  G4double GeneralRIndPhotonEnergy[49] = {
+    
+    hc_eVnm / 250*eV,
+    hc_eVnm / 260*eV,
+    hc_eVnm / 270*eV,
+    hc_eVnm / 280*eV,
+    hc_eVnm / 290*eV,
+    hc_eVnm / 300*eV,
+    hc_eVnm / 310*eV,
+    hc_eVnm / 320*eV,
+    hc_eVnm / 330*eV,
+    hc_eVnm / 340*eV,
+    hc_eVnm / 350*eV,
+    hc_eVnm / 360*eV,
+    hc_eVnm / 370*eV,
+    hc_eVnm / 380*eV,
+    hc_eVnm / 390*eV,
+    hc_eVnm / 400*eV,
+    hc_eVnm / 410*eV,
+    hc_eVnm / 420*eV,
+    hc_eVnm / 430*eV,
+    hc_eVnm / 440*eV,
+    hc_eVnm / 450*eV,
+    hc_eVnm / 460*eV,
+    hc_eVnm / 470*eV,
+    hc_eVnm / 480*eV,
+    hc_eVnm / 490*eV,
+    hc_eVnm / 500*eV,
+    hc_eVnm / 510*eV,
+    hc_eVnm / 520*eV,
+    hc_eVnm / 530*eV,
+    hc_eVnm / 540*eV,
+    hc_eVnm / 550*eV,
+    hc_eVnm / 560*eV,
+    hc_eVnm / 570*eV,
+    hc_eVnm / 580*eV,
+    hc_eVnm / 590*eV,
+    hc_eVnm / 600*eV,
+    hc_eVnm / 610*eV,
+    hc_eVnm / 620*eV,
+    hc_eVnm / 630*eV,
+    hc_eVnm / 640*eV,
+    hc_eVnm / 650*eV,
+    hc_eVnm / 660*eV,
+    hc_eVnm / 670*eV,
+    hc_eVnm / 680*eV,
+    hc_eVnm / 690*eV,
+    hc_eVnm / 700*eV,
+    hc_eVnm / 710*eV,
+    hc_eVnm / 720*eV,
+    hc_eVnm / 730*eV
+  };
   
   // --------------------- VitroVex-----------------------------------------		
-  DataFile = "../Detector_construction_files/Refractive_index/Vitrovex_glass.txt";  
-  fileFirstColumn = readColumnDouble(DataFile, 1);
-  G4double VitroVexGlassRInd[49];
-  std::copy(fileFirstColumn.begin(), fileFirstColumn.end(), VitroVexGlassRInd);
   
-  DataFile = "../Detector_construction_files/Abs_length/Vitrovex_glass.txt";         
-  fileFirstColumn = readColumnDouble(DataFile, 1);
-  fileSecondColumn = readColumnDouble(DataFile, 2);  
+  G4double VitroVexGlassRInd[49] = {
+    
+    1.5229,
+    1.5179,
+    1.5135,
+    1.5095,
+    1.5060,
+    1.5029,
+    1.5001,
+    1.4975,
+    1.4952,
+    1.4931,
+    1.4912,
+    1.4895,
+    1.4879,
+    1.4864,
+    1.4851,
+    1.4838,
+    1.4827,
+    1.4816,
+    1.4806,
+    1.4797,
+    1.4789,
+    1.4781,
+    1.4773,
+    1.4766,
+    1.4759,
+    1.4753,
+    1.4747,
+    1.4742,
+    1.4737,
+    1.4732,
+    1.4727,
+    1.4723,
+    1.4719,
+    1.4715,
+    1.4711,
+    1.4708,
+    1.4704,
+    1.4701,
+    1.4698,
+    1.4695,
+    1.4693,
+    1.4690,
+    1.4687,
+    1.4685,
+    1.4683,
+    1.4681,
+    1.4678,
+    1.4676,
+    1.4674
+  };
   
-  G4double VitroVexGlassPhotonEnergy[35];
-  G4double VitroVexGlassAbsLen[35];
-  std::copy(fileFirstColumn.begin(), fileFirstColumn.end(), VitroVexGlassPhotonEnergy);
-  std::copy(fileSecondColumn.begin(), fileSecondColumn.end(), VitroVexGlassAbsLen);
+  G4double VitroVexGlassPhotonEnergy[35] = {
+    
+    hc_eVnm / 730.0*eV,
+    hc_eVnm / 609.6*eV,
+    hc_eVnm / 599.5*eV,
+    hc_eVnm / 589.6*eV,
+    hc_eVnm / 579.6*eV,
+    hc_eVnm / 569.5*eV,
+    hc_eVnm / 559.5*eV,
+    hc_eVnm / 549.6*eV,
+    hc_eVnm / 539.5*eV,
+    hc_eVnm / 529.6*eV,
+    hc_eVnm / 519.6*eV,
+    hc_eVnm / 509.6*eV,
+    hc_eVnm / 499.7*eV,
+    hc_eVnm / 489.7*eV,
+    hc_eVnm / 479.6*eV,
+    hc_eVnm / 469.6*eV,
+    hc_eVnm / 459.7*eV,
+    hc_eVnm / 449.7*eV,
+    hc_eVnm / 439.7*eV,
+    hc_eVnm / 429.8*eV,
+    hc_eVnm / 419.7*eV,
+    hc_eVnm / 409.7*eV,
+    hc_eVnm / 399.7*eV,
+    hc_eVnm / 389.8*eV,
+    hc_eVnm / 379.7*eV,
+    hc_eVnm / 369.8*eV,
+    hc_eVnm / 359.8*eV,
+    hc_eVnm / 349.7*eV,
+    hc_eVnm / 339.8*eV,
+    hc_eVnm / 329.7*eV,
+    hc_eVnm / 319.8*eV,
+    hc_eVnm / 309.8*eV,
+    hc_eVnm / 299.8*eV,
+    hc_eVnm / 296.6*eV,
+    hc_eVnm / 230.0*eV
+  };
   
-    for (unsigned int u = 0; u <fileFirstColumn.size(); u++) {
-    VitroVexGlassPhotonEnergy[u] = hc_eVnm / VitroVexGlassPhotonEnergy[u]*eV;  
-    VitroVexGlassAbsLen[u] = VitroVexGlassAbsLen[u]*mm;  
-  }
+  G4double VitroVexGlassAbsLen[35] = {
+    
+    530.0*mm,
+    530.0*mm,
+    540.0*mm,
+    580.0*mm,
+    650.0*mm,
+    750.0*mm,
+    730.0*mm,
+    650.0*mm,
+    630.0*mm,
+    600.0*mm,
+    600.0*mm,
+    580.0*mm,
+    580.0*mm,
+    500.0*mm,
+    420.0*mm,
+    400.0*mm,
+    380.0*mm,
+    350.0*mm,
+    360.0*mm,
+    360.0*mm,
+    350.0*mm,
+    450.0*mm,
+    590.0*mm,
+    610.0*mm,
+    600.0*mm,
+    300.0*mm,
+    550.0*mm,
+    400.0*mm,
+    200.0*mm,
+    100.0*mm,
+    50.0*mm,
+    30.0*mm,
+    10.0*mm,
+    0.0*mm,
+    0.0*mm
+  };
+  
+  
   
   
   // -------------------------- Chiba glass -----------------------------------------------------------
-  DataFile = "../Detector_construction_files/Refractive_index/Chiba_glass.txt";  
-  fileFirstColumn = readColumnDouble(DataFile, 1);
-  G4double ChibaGlassRInd[49];
-  std::copy(fileFirstColumn.begin(), fileFirstColumn.end(), ChibaGlassRInd);
-
-  DataFile = "../Detector_construction_files/Abs_length/Chiba_glass.txt";         // probably unphysical values
-  fileFirstColumn = readColumnDouble(DataFile, 1);
-  fileSecondColumn = readColumnDouble(DataFile, 2);  
   
-  G4double ChibaGlassAbsPhotonEnergy[37];
-  G4double ChibaGlassAbsLen[37];
-  std::copy(fileFirstColumn.begin(), fileFirstColumn.end(), ChibaGlassAbsPhotonEnergy);
-  std::copy(fileSecondColumn.begin(), fileSecondColumn.end(), ChibaGlassAbsLen);
+  G4double ChibaGlassRInd[49] = {
+    
+    1.5504,
+    1.5445,
+    1.5394,
+    1.5348,
+    1.5308,
+    1.5273,
+    1.5241,
+    1.5213,
+    1.5187,
+    1.5164,
+    1.5143,
+    1.5123,
+    1.5106,
+    1.5090,
+    1.5075,
+    1.5061,
+    1.5049,
+    1.5037,
+    1.5026,
+    1.5016,
+    1.5007,
+    1.4998,
+    1.4990,
+    1.4983,
+    1.4976,
+    1.4969,
+    1.4963,
+    1.4957,
+    1.4951,
+    1.4946,
+    1.4941,
+    1.4937,
+    1.4932,
+    1.4928,
+    1.4924,
+    1.4920,
+    1.4917,
+    1.4913,
+    1.4910,
+    1.4907,
+    1.4904,
+    1.4901,
+    1.4899,
+    1.4896,
+    1.4894,
+    1.4891,
+    1.4889,
+    1.4887,
+    1.4885
+  };
   
-    for (unsigned int u = 0; u <fileFirstColumn.size(); u++) {
-    ChibaGlassAbsPhotonEnergy[u] = hc_eVnm / ChibaGlassAbsPhotonEnergy[u]*eV;  
-    ChibaGlassAbsLen[u] = ChibaGlassAbsLen[u]*mm;  
-    }
+  G4double ChibaGlassAbsPhotonEnergy[37] = {
+    
+    hc_eVnm / 250.0*eV,
+    hc_eVnm / 254.0*eV,
+    hc_eVnm / 258.0*eV,
+    hc_eVnm / 262.0*eV,
+    hc_eVnm / 266.0*eV,
+    hc_eVnm / 270.0*eV,
+    hc_eVnm / 274.0*eV,
+    hc_eVnm / 278.0*eV,
+    hc_eVnm / 282.0*eV,
+    hc_eVnm / 286.0*eV,
+    hc_eVnm / 290.0*eV,
+    hc_eVnm / 294.0*eV,
+    hc_eVnm / 298.0*eV,
+    hc_eVnm / 302.0*eV,
+    hc_eVnm / 306.0*eV,
+    hc_eVnm / 310.0*eV,
+    hc_eVnm / 314.0*eV,
+    hc_eVnm / 318.0*eV,
+    hc_eVnm / 322.0*eV,
+    hc_eVnm / 326.0*eV,
+    hc_eVnm / 330.0*eV,
+    hc_eVnm / 335.0*eV,
+    hc_eVnm / 340.0*eV,
+    hc_eVnm / 347.0*eV,
+    hc_eVnm / 351.0*eV,
+    hc_eVnm / 355.0*eV,
+    hc_eVnm / 368.0*eV,
+    hc_eVnm / 372.0*eV,
+    hc_eVnm / 376.0*eV,
+    hc_eVnm / 380.0*eV,
+    hc_eVnm / 384.0*eV,
+    hc_eVnm / 388.0*eV,
+    hc_eVnm / 392.0*eV,
+    hc_eVnm / 397.0*eV,
+    hc_eVnm / 401.0*eV,
+    hc_eVnm / 405.0*eV,
+    hc_eVnm / 730.0*eV
+  };
+  
+  G4double ChibaGlassAbsLen[37] = {
+    
+    0*mm,
+    0*mm,
+    0*mm,
+    0*mm,		
+    
+    // 		1.7*mm,		// probably unphysical values
+    // 		1.7*mm,
+    // 		1.7*mm,
+    // 		1.7*mm,
+    
+    1.7*mm,
+    1.8*mm,
+    2.0*mm,
+    2.2*mm,
+    2.6*mm,
+    3.2*mm,
+    4.1*mm,
+    5.4*mm,
+    7.2*mm,
+    9.4*mm,
+    12.6*mm,
+    16.8*mm,
+    22.9*mm,
+    29.2*mm,
+    40.9*mm,
+    54.5*mm,
+    78.4*mm,
+    99.5*mm,
+    172.3*mm,
+    250.7*mm,
+    320.1*mm,
+    480.7*mm,
+    1434.1*mm,
+    1434.1*mm,
+    1434.1*mm,
+    1434.1*mm,
+    1434.1*mm,
+    1434.1*mm,
+    1434.1*mm,
+    1434.1*mm,
+    1434.1*mm,
+    1434.1*mm,
+    1434.1*mm
+  };
   
   // ------------------------- IceCube glass --------------------------------------------------
   // values taken from DOMINANT simulation code from Chiba
-  DataFile = "../Detector_construction_files/Abs_length/IceCube_glass.txt";
-  fileFirstColumn = readColumnDouble(DataFile, 1);
-  fileSecondColumn = readColumnDouble(DataFile, 2);  
-
-  G4double IceCubeGlassPhotonEnergy[36];
-  G4double IceCubeGlassAbsLen[36];
-  std::copy(fileFirstColumn.begin(), fileFirstColumn.end(), IceCubeGlassPhotonEnergy);
-  std::copy(fileSecondColumn.begin(), fileSecondColumn.end(), IceCubeGlassAbsLen);
-  
-    for (unsigned int u = 0; u <fileFirstColumn.size(); u++) {
-    IceCubeGlassPhotonEnergy[u] = hc_eVnm / IceCubeGlassPhotonEnergy[u]*eV;  
-    IceCubeGlassAbsLen[u] = IceCubeGlassAbsLen[u]*mm;  
-    }
-  // --------------------- my VitroVex-----------------------------------------		
-  DataFile = "../Detector_construction_files/Abs_length/myVitrovex_glass.txt";
-  fileFirstColumn = readColumnDouble(DataFile, 1);
-  fileSecondColumn = readColumnDouble(DataFile, 2);  
-
-  G4double myVitroVexGlassPhotonEnergy[82];
-  G4double myVitroVexGlassAbsLen[82];
-  std::copy(fileFirstColumn.begin(), fileFirstColumn.end(), myVitroVexGlassPhotonEnergy);
-  std::copy(fileSecondColumn.begin(), fileSecondColumn.end(), myVitroVexGlassAbsLen);
-  
-    for (unsigned int u = 0; u <fileFirstColumn.size(); u++) {
-    myVitroVexGlassPhotonEnergy[u] = hc_eVnm / myVitroVexGlassPhotonEnergy[u]*eV;  
-    myVitroVexGlassAbsLen[u] = myVitroVexGlassAbsLen[u]*mm;  
-    } 
-  // -------------------------- my Chiba glass -----------------------------------------------------------
-  DataFile = "../Detector_construction_files/Abs_length/myChiba_glass.txt";
-  fileFirstColumn = readColumnDouble(DataFile, 1);
-  fileSecondColumn = readColumnDouble(DataFile, 2);  
-  
-  G4double myChibaGlassAbsPhotonEnergy[23];
-  G4double myChibaGlassAbsLen[23];
-  std::copy(fileFirstColumn.begin(), fileFirstColumn.end(), myChibaGlassAbsPhotonEnergy);
-  std::copy(fileSecondColumn.begin(), fileSecondColumn.end(), myChibaGlassAbsLen);
-  
-    for (unsigned int u = 0; u <fileFirstColumn.size(); u++) {
-    myChibaGlassAbsPhotonEnergy[u] = hc_eVnm / myChibaGlassAbsPhotonEnergy[u]*eV;  
-    myChibaGlassAbsLen[u] = myChibaGlassAbsLen[u]*mm;  
-    }
+  G4double IceCubeGlassPhotonEnergy[37] = { 
     
+    hc_eVnm / 250.0*eV,
+    hc_eVnm / 270.0*eV,
+    hc_eVnm / 280.0*eV,
+    hc_eVnm / 290.0*eV,
+    hc_eVnm / 300.0*eV,
+    hc_eVnm / 310.0*eV,
+    hc_eVnm / 320.0*eV,
+    hc_eVnm / 330.0*eV,
+    hc_eVnm / 340.0*eV,
+    hc_eVnm / 350.0*eV,
+    hc_eVnm / 360.0*eV,
+    hc_eVnm / 370.0*eV,
+    hc_eVnm / 380.0*eV,
+    hc_eVnm / 390.0*eV,
+    hc_eVnm / 400.0*eV,
+    hc_eVnm / 410.0*eV,
+    hc_eVnm / 420.0*eV,
+    hc_eVnm / 430.0*eV,
+    hc_eVnm / 440.0*eV,
+    hc_eVnm / 450.0*eV,
+    hc_eVnm / 460.0*eV,
+    hc_eVnm / 470.0*eV,
+    hc_eVnm / 480.0*eV,
+    hc_eVnm / 490.0*eV,
+    hc_eVnm / 500.0*eV,
+    hc_eVnm / 510.0*eV,
+    hc_eVnm / 520.0*eV,
+    hc_eVnm / 530.0*eV,
+    hc_eVnm / 540.0*eV,
+    hc_eVnm / 550.0*eV,
+    hc_eVnm / 560.0*eV,
+    hc_eVnm / 570.0*eV,
+    hc_eVnm / 580.0*eV,
+    hc_eVnm / 590.0*eV,
+    hc_eVnm / 600.0*eV,
+    hc_eVnm / 730.0*eV
+  };
+  
+  G4double IceCubeGlassAbsLen[37] = {
+    
+    0.0*mm,
+    0.0*mm,
+    1.2*mm,
+    1.4*mm,
+    1.5*mm,
+    3.8*mm,
+    5.2*mm,
+    7.8*mm,
+    13.2*mm,
+    24.2*mm,
+    33.9*mm,
+    52.8*mm,
+    80.3*mm,
+    107.5*mm,
+    160.2*mm,
+    181.2*mm,
+    208.2*mm,
+    236.5*mm,
+    263.1*mm,
+    297.1*mm,
+    341.0*mm,
+    401.5*mm,
+    460.1*mm,
+    513.1*mm,
+    576.4*mm,
+    648.6*mm,
+    735.7*mm,
+    821.4*mm,
+    904.1*mm,
+    995.0*mm,
+    1047.6*mm,
+    1106.1*mm,
+    1157.8*mm,
+    1229.6*mm,
+    1293.7*mm,
+    1293.7*mm
+  };
+  
+  
+  // --------------------- my VitroVex-----------------------------------------		
+  
+  G4double myVitroVexGlassPhotonEnergy[82] = {
+    
+    hc_eVnm / 250.0*eV,
+    hc_eVnm / 305.0*eV,
+    hc_eVnm / 310.0*eV,
+    hc_eVnm / 315.0*eV,
+    hc_eVnm / 320.0*eV,
+    hc_eVnm / 325.0*eV,
+    hc_eVnm / 330.0*eV,
+    hc_eVnm / 335.0*eV,
+    hc_eVnm / 340.0*eV,
+    hc_eVnm / 345.0*eV,
+    hc_eVnm / 350.0*eV,
+    hc_eVnm / 355.0*eV,
+    hc_eVnm / 360.0*eV,
+    hc_eVnm / 365.0*eV,
+    hc_eVnm / 370.0*eV,
+    hc_eVnm / 375.0*eV,
+    hc_eVnm / 380.0*eV,
+    hc_eVnm / 385.0*eV,
+    hc_eVnm / 390.0*eV,
+    hc_eVnm / 395.0*eV,
+    hc_eVnm / 400.0*eV,
+    hc_eVnm / 405.0*eV,
+    hc_eVnm / 410.0*eV,
+    hc_eVnm / 415.0*eV,
+    hc_eVnm / 420.0*eV,
+    hc_eVnm / 425.0*eV,
+    hc_eVnm / 430.0*eV,
+    hc_eVnm / 435.0*eV,
+    hc_eVnm / 440.0*eV,
+    hc_eVnm / 445.0*eV,
+    hc_eVnm / 450.0*eV,
+    hc_eVnm / 455.0*eV,
+    hc_eVnm / 460.0*eV,
+    hc_eVnm / 465.0*eV,
+    hc_eVnm / 470.0*eV,
+    hc_eVnm / 475.0*eV,
+    hc_eVnm / 480.0*eV,
+    hc_eVnm / 485.0*eV,
+    hc_eVnm / 490.0*eV,
+    hc_eVnm / 495.0*eV,
+    hc_eVnm / 500.0*eV,
+    hc_eVnm / 505.0*eV,
+    hc_eVnm / 510.0*eV,
+    hc_eVnm / 515.0*eV,
+    hc_eVnm / 520.0*eV,
+    hc_eVnm / 525.0*eV,
+    hc_eVnm / 530.0*eV,
+    hc_eVnm / 535.0*eV,
+    hc_eVnm / 540.0*eV,
+    hc_eVnm / 545.0*eV,
+    hc_eVnm / 550.0*eV,
+    hc_eVnm / 555.0*eV,
+    hc_eVnm / 560.0*eV,
+    hc_eVnm / 565.0*eV,
+    hc_eVnm / 570.0*eV,
+    hc_eVnm / 575.0*eV,
+    hc_eVnm / 580.0*eV,
+    hc_eVnm / 585.0*eV,
+    hc_eVnm / 590.0*eV,
+    hc_eVnm / 595.0*eV,
+    hc_eVnm / 600.0*eV,
+    hc_eVnm / 605.0*eV,
+    hc_eVnm / 610.0*eV,
+    hc_eVnm / 615.0*eV,
+    hc_eVnm / 620.0*eV,
+    hc_eVnm / 625.0*eV,
+    hc_eVnm / 630.0*eV,
+    hc_eVnm / 635.0*eV,
+    hc_eVnm / 640.0*eV,
+    hc_eVnm / 645.0*eV,
+    hc_eVnm / 650.0*eV,
+    hc_eVnm / 655.0*eV,
+    hc_eVnm / 660.0*eV,
+    hc_eVnm / 665.0*eV,
+    hc_eVnm / 670.0*eV,
+    hc_eVnm / 675.0*eV,
+    hc_eVnm / 680.0*eV,
+    hc_eVnm / 685.0*eV,
+    hc_eVnm / 690.0*eV,
+    hc_eVnm / 695.0*eV,
+    hc_eVnm / 700.0*eV,
+    hc_eVnm / 730.0*eV
+  };
+  
+  G4double myVitroVexGlassAbsLen[82] = {
+    
+    0.0*mm,
+    0.7*mm,
+    1.7*mm,
+    3.8*mm,
+    7.1*mm,
+    12.0*mm,
+    19.2*mm,
+    29.6*mm,
+    44.6*mm,
+    66.5*mm,
+    97.8*mm,
+    145.7*mm,
+    208.1*mm,
+    297.9*mm,
+    415.7*mm,
+    494.2*mm,
+    374.1*mm,
+    327.9*mm,
+    447.0*mm,
+    639.4*mm,
+    747.5*mm,
+    742.1*mm,
+    678.9*mm,
+    566.4*mm,
+    514.6*mm,
+    478.4*mm,
+    457.2*mm,
+    429.9*mm,
+    431.1*mm,
+    416.9*mm,
+    427.7*mm,
+    459.2*mm,
+    491.0*mm,
+    525.2*mm,
+    578.6*mm,
+    612.5*mm,
+    654.2*mm,
+    685.2*mm,
+    711.9*mm,
+    776.5*mm,
+    828.8*mm,
+    889.2*mm,
+    1023.0*mm,
+    1113.9*mm,
+    1278.5*mm,
+    1410.6*mm,
+    1468.5*mm,
+    1615.6*mm,
+    1525.9*mm,
+    1565.4*mm,
+    1524.8*mm,
+    1471.3*mm,
+    1326.7*mm,
+    1455.7*mm,
+    1260.1*mm,
+    1136.3*mm,
+    996.1*mm,
+    934.6*mm,
+    861.4*mm,
+    803.8*mm,
+    748.6*mm,
+    720.0*mm,
+    697.1*mm,
+    684.9*mm,
+    688.1*mm,
+    660.8*mm,
+    646.3*mm,
+    674.0*mm,
+    684.6*mm,
+    703.3*mm,
+    740.3*mm,
+    774.0*mm,
+    790.7*mm,
+    864.4*mm,
+    945.9*mm,
+    1016.3*mm,
+    1111.2*mm,
+    1094.0*mm,
+    1167.4*mm,
+    1160.3*mm,
+    1162.2*mm,
+    1162.2*mm
+  };
+  
+  
+  // -------------------------- my Chiba glass -----------------------------------------------------------
+  
+  G4double myChibaGlassAbsPhotonEnergy[23] = {
+    
+    hc_eVnm / 250.0*eV,
+    hc_eVnm / 295.0*eV,
+    hc_eVnm / 300.0*eV,
+    hc_eVnm / 305.0*eV,
+    hc_eVnm / 310.0*eV,
+    hc_eVnm / 315.0*eV,
+    hc_eVnm / 320.0*eV,
+    hc_eVnm / 325.0*eV,
+    hc_eVnm / 330.0*eV,
+    hc_eVnm / 335.0*eV,
+    hc_eVnm / 340.0*eV,
+    hc_eVnm / 345.0*eV,
+    hc_eVnm / 350.0*eV,
+    hc_eVnm / 355.0*eV,
+    hc_eVnm / 360.0*eV,
+    hc_eVnm / 365.0*eV,
+    hc_eVnm / 370.0*eV,
+    hc_eVnm / 375.0*eV,
+    hc_eVnm / 380.0*eV,
+    hc_eVnm / 385.0*eV,
+    hc_eVnm / 390.0*eV,
+    hc_eVnm / 395.0*eV,
+    hc_eVnm / 730.0*eV
+  };
+  
+  G4double myChibaGlassAbsLen[23] = {
+    
+    0*mm,
+    0.3*mm,
+    0.7*mm,
+    1.6*mm,
+    3.4*mm,
+    6.1*mm,
+    10.4*mm,
+    16.2*mm,
+    25.0*mm,
+    37.2*mm,
+    53.1*mm,
+    77.9*mm,
+    115.2*mm,
+    173.1*mm,
+    268.2*mm,
+    409.1*mm,
+    651.7*mm,
+    946.0*mm,
+    698.6*mm,
+    625.1*mm,
+    922.3*mm,
+    1500*mm,
+    1500*mm
+  };
+  
+  
+  
   // ------------------------- WOM quartz glass --------------------------------------------------
   // refractive index from Refractive index info
   // from I. H. Malitson. Interspecimen Comparison of the Refractive Index of Fused Silica, J. Opt. Soc. Am. 55, 1205-1208 (1965)
   
-  DataFile = "../Detector_construction_files/Refractive_index/WOM_quartz.txt";
-  fileFirstColumn = readColumnDouble(DataFile, 1);
-  fileSecondColumn = readColumnDouble(DataFile, 2);  
+  G4double QuartzRIndPhotonEnergy[31] = {
+    
+    hc_eVnm / 150*eV,
+    hc_eVnm / 160*eV,
+    hc_eVnm / 170*eV,
+    hc_eVnm / 190*eV,
+    hc_eVnm / 210*eV,
+    hc_eVnm / 230*eV,
+    hc_eVnm / 250*eV,
+    hc_eVnm / 270*eV,
+    hc_eVnm / 290*eV,
+    hc_eVnm / 310*eV,
+    hc_eVnm / 330*eV,
+    hc_eVnm / 350*eV,
+    hc_eVnm / 370*eV,
+    hc_eVnm / 390*eV,
+    hc_eVnm / 410*eV,
+    hc_eVnm / 430*eV,
+    hc_eVnm / 450*eV,
+    hc_eVnm / 470*eV,
+    hc_eVnm / 490*eV,
+    hc_eVnm / 510*eV,
+    hc_eVnm / 530*eV,
+    hc_eVnm / 550*eV,
+    hc_eVnm / 570*eV,
+    hc_eVnm / 590*eV,
+    hc_eVnm / 610*eV,
+    hc_eVnm / 630*eV,
+    hc_eVnm / 650*eV,
+    hc_eVnm / 670*eV,
+    hc_eVnm / 690*eV,
+    hc_eVnm / 710*eV,
+    hc_eVnm / 730*eV
+  };
   
-  G4double QuartzRIndPhotonEnergy[31];
-  G4double QuartzGlassRInd[31];
-  std::copy(fileFirstColumn.begin(), fileFirstColumn.end(), QuartzRIndPhotonEnergy);
-  std::copy(fileSecondColumn.begin(), fileSecondColumn.end(), QuartzGlassRInd);
+  G4double QuartzGlassRInd[31] = {
+    
+    1.7029,
+    1.64790241147,
+    1.6114,
+    1.5657,
+    1.5384,
+    1.5202,
+    1.5074,
+    1.4980,
+    1.4908,
+    1.4851,
+    1.4806,
+    1.4769,
+    1.4738,
+    1.4713,
+    1.4691,
+    1.4672,
+    1.4656,
+    1.4641,
+    1.4629,
+    1.4618,
+    1.4608,
+    1.4599,
+    1.4591,
+    1.4584,
+    1.4577,
+    1.4571,
+    1.4565,
+    1.4560,
+    1.4555,
+    1.4551,
+    1.4546
+  };
   
-  for (unsigned int u = 0; u <fileFirstColumn.size(); u++) {
-    QuartzRIndPhotonEnergy[u] = hc_eVnm / QuartzRIndPhotonEnergy[u]*eV;  
-  }
+  G4double WOMGlassAbsPhotonEnergy[32] = {
+    
+    hc_eVnm / 150.0*eV,
+    hc_eVnm / 182.0*eV,
+    hc_eVnm / 190.0*eV,
+    hc_eVnm / 200.0*eV,
+    hc_eVnm / 206.0*eV,
+    hc_eVnm / 215.7*eV,
+    hc_eVnm / 219.6*eV,
+    hc_eVnm / 223.6*eV,
+    hc_eVnm / 228.4*eV,
+    hc_eVnm / 233.8*eV,
+    hc_eVnm / 242.4*eV,
+    hc_eVnm / 253.0*eV,
+    hc_eVnm / 261.4*eV,
+    hc_eVnm / 267.6*eV,
+    hc_eVnm / 277.9*eV,
+    hc_eVnm / 285.6*eV,
+    hc_eVnm / 295.1*eV,
+    hc_eVnm / 312.5*eV,
+    hc_eVnm / 335.2*eV,
+    hc_eVnm / 368.5*eV,
+    hc_eVnm / 396.5*eV,
+    hc_eVnm / 438.3*eV,
+    hc_eVnm / 458.9*eV,
+    hc_eVnm / 487.5*eV,
+    hc_eVnm / 522.4*eV,
+    hc_eVnm / 559.4*eV,
+    hc_eVnm / 584.8*eV,
+    hc_eVnm / 603.3*eV,
+    hc_eVnm / 622.3*eV,
+    hc_eVnm / 639.2*eV,
+    hc_eVnm / 648.8*eV,
+    hc_eVnm / 730.0*eV
+  };
   
-  
-  
-  DataFile = "../Detector_construction_files/Abs_length/WOM_quartz.txt";
-  fileFirstColumn = readColumnDouble(DataFile, 1);
-  fileSecondColumn = readColumnDouble(DataFile, 2);  
-  
-  G4double WOMGlassAbsPhotonEnergy[32];
-  G4double WOMGlassAbsLen[32];
-  std::copy(fileFirstColumn.begin(), fileFirstColumn.end(), WOMGlassAbsPhotonEnergy);
-  std::copy(fileSecondColumn.begin(), fileSecondColumn.end(), WOMGlassAbsLen);
-  
-  for (unsigned int u = 0; u <fileFirstColumn.size(); u++) {
-    WOMGlassAbsPhotonEnergy[u] = hc_eVnm / WOMGlassAbsPhotonEnergy[u]*eV;  
-    WOMGlassAbsLen[u] = WOMGlassAbsLen[u]*mm; 
-  }
+  G4double WOMGlassAbsLen[32] = {
+    0.0*mm,
+    0.0*mm,
+    3.1*mm,
+    5.5*mm,
+    9.3*mm,
+    13.5*mm,
+    15.0*mm,
+    13.9*mm,
+    10.3*mm,
+    7.4*mm,
+    5.7*mm,
+    5.9*mm,
+    7.3*mm,
+    10.0*mm,
+    22.7*mm,
+    57.1*mm,
+    127.0*mm,
+    346.7*mm,
+    1049.7*mm,
+    1400.0*mm,
+    522.5*mm,
+    258.8*mm,
+    522.5*mm,
+    258.8*mm,
+    258.8*mm,
+    522.5*mm,
+    1049.7*mm,
+    346.7*mm,
+    258.8*mm,
+    522.5*mm,
+    171.0*mm,
+    346.7*mm
+  };
   
   // ------------------------- Fused Silica --------------------------------------------------
   // data from Thorlabs https://www.thorlabs.de/newgrouppage9.cfm?objectgroup_id=3983
   // refractive index identical to WOM values above
-  DataFile = "../Detector_construction_files/Abs_length/Fused_silica.txt";
-  fileFirstColumn = readColumnDouble(DataFile, 1);
-  fileSecondColumn = readColumnDouble(DataFile, 2);  
+  G4double FusedSilicaAbsPhotonEnergy[26] = {
+    
+    hc_eVnm / 150.0*eV,
+    hc_eVnm / 180.0*eV,
+    hc_eVnm / 190.0*eV,
+    hc_eVnm / 195.0*eV,
+    hc_eVnm / 200.0*eV,
+    hc_eVnm / 201.0*eV,
+    hc_eVnm / 202.0*eV,
+    hc_eVnm / 203.0*eV,
+    hc_eVnm / 204.0*eV,
+    hc_eVnm / 209.0*eV,
+    hc_eVnm / 210.0*eV,
+    hc_eVnm / 211.0*eV,
+    hc_eVnm / 212.0*eV,
+    hc_eVnm / 213.0*eV,
+    hc_eVnm / 214.0*eV,
+    hc_eVnm / 215.0*eV,
+    hc_eVnm / 219.0*eV,
+    hc_eVnm / 229.0*eV,
+    hc_eVnm / 230.0*eV,
+    hc_eVnm / 231.0*eV,
+    hc_eVnm / 238.0*eV,
+    hc_eVnm / 240.0*eV,
+    hc_eVnm / 242.0*eV,
+    hc_eVnm / 245.0*eV,
+    hc_eVnm / 246.0*eV,
+    hc_eVnm / 730.0*eV
+  };
   
-  G4double FusedSilicaAbsPhotonEnergy[26];
-  G4double FusedSilicaGlassAbsLen[26];
-  std::copy(fileFirstColumn.begin(), fileFirstColumn.end(), FusedSilicaAbsPhotonEnergy);
-  std::copy(fileSecondColumn.begin(), fileSecondColumn.end(), FusedSilicaGlassAbsLen);
+  G4double FusedSilicaGlassAbsLen[26] = {
+    
+    0.*mm,
+    0.*mm,
+    20.*mm,
+    65.0*mm,
+    243.5*mm,
+    267.1*mm,
+    291.3*mm,
+    315.3*mm,
+    347.4*mm,
+    518.5*mm,
+    563.2*mm,
+    596.2*mm,
+    633.5*mm,
+    667.2*mm,
+    700.8*mm,
+    703.6*mm,
+    750.3*mm,
+    761.6*mm,
+    744.1*mm,
+    800.5*mm,
+    1125.4*mm,
+    1286.0*mm,
+    1483.8*mm,
+    1899.6*mm,
+    2000.0*mm,
+    2000.0*mm
+  };
   
-  for (unsigned int u = 0; u <fileFirstColumn.size(); u++) {
-    FusedSilicaAbsPhotonEnergy[u] = hc_eVnm / FusedSilicaAbsPhotonEnergy[u]*eV;  
-    FusedSilicaGlassAbsLen[u] = FusedSilicaGlassAbsLen[u]*mm; 
-  }
   
   //----------------_Scintillation-----------
   // distribution of produced optical photons
@@ -791,85 +1805,8 @@ G4VPhysicalVolume* mdomDetectorConstruction::Construct() {
     0.241971
   };
   //----------------_Scintillation-----------
-  G4double Scnt_SLOW[32] = { 
-    0.000069,
-    0.013156,
-    0.022110,
-    0.029136,
-    0.035059,
-    0.044152,
-    0.051315,
-    0.057515,
-    0.061234,
-    0.062612,
-    0.063714,
-    0.063714,
-    0.062612,
-    0.060959,
-    0.058341,
-    0.055035,
-    0.049938,
-    0.042223,
-    0.034095,
-    0.029274,
-    0.024866,
-    0.021559,
-    0.017289,
-    0.013156,
-    0.010401,
-    0.006268,
-    0.004064,
-    0.002687,
-    0.001723,
-    0.000896,
-    0.000483,
-    0.000345
-  };
-  /* G4double Scnt_FAST[9] = { 
-   *	    0.000010, 
-   *	    0.000020, 
-   *	    0.000030, 
-   *	    0.004000,                 
-   *	    0.008000, 
-   *	    0.005000, 
-   *	    0.020000, 
-   *	    0.001000,
-   *	    0.000010 };*/
-  G4double Scnt_PP[32] = { 
-    hc_eVnm / 337.3*eV,
-    hc_eVnm / (350.1+gscintSpectrum)*eV,
-    hc_eVnm / (356.6+gscintSpectrum)*eV,
-    hc_eVnm / (360.7+gscintSpectrum)*eV,
-    hc_eVnm / (363.9+gscintSpectrum)*eV,
-    hc_eVnm / (369.9+gscintSpectrum)*eV,
-    hc_eVnm / (375.0+gscintSpectrum)*eV,
-    hc_eVnm / (380.9+gscintSpectrum)*eV,
-    hc_eVnm / (385.9+gscintSpectrum)*eV,
-    hc_eVnm / (388.7+gscintSpectrum)*eV,
-    hc_eVnm / (392.3+gscintSpectrum)*eV,
-    hc_eVnm / (396.9+gscintSpectrum)*eV,
-    hc_eVnm / (401.4+gscintSpectrum)*eV,
-    hc_eVnm / (405.0+gscintSpectrum)*eV,
-    hc_eVnm / (409.5+gscintSpectrum)*eV,
-    hc_eVnm / (414.0+gscintSpectrum)*eV,
-    hc_eVnm / (419.9+gscintSpectrum)*eV,
-    hc_eVnm / (429.3+gscintSpectrum)*eV,
-    hc_eVnm / (439.7+gscintSpectrum)*eV,
-    hc_eVnm / (446.9+gscintSpectrum)*eV,
-    hc_eVnm / (454.1+gscintSpectrum)*eV,
-    hc_eVnm / (460.0+gscintSpectrum)*eV,
-    hc_eVnm / (468.5+gscintSpectrum)*eV,
-    hc_eVnm / (478.0+gscintSpectrum)*eV,
-    hc_eVnm / (486.6+gscintSpectrum)*eV,
-    hc_eVnm / (505.6+gscintSpectrum)*eV,
-    hc_eVnm / (519.7+gscintSpectrum)*eV,
-    hc_eVnm / (534.2+gscintSpectrum)*eV,
-    hc_eVnm / (549.6+gscintSpectrum)*eV,
-    hc_eVnm / (568.1+gscintSpectrum)*eV,
-    hc_eVnm / (585.8+gscintSpectrum)*eV,
-    hc_eVnm / (599.4+gscintSpectrum)*eV
-  };
   
+ 
   G4double Temperature[5] = {
     -15,
     -25,
@@ -878,56 +1815,138 @@ G4VPhysicalVolume* mdomDetectorConstruction::Construct() {
     -50
   };
   
-  
-  
-  G4double FirstCompomentAmplitude[5] = {
-    7.44264474e-03,
-    7.09497579e-03,
-    6.88619615e-03,
-    6.71650386e-03,
-    6.26193414e-03 
+   G4double TemperatureVitrovex[6] = {
+     13,
+    -15,
+    -25,
+    -35,
+    -45,
+    -50
   };
   
-  G4double SecondCompomentAmplitude[5] = {
-    3.72712597e-03,
-    3.44366607e-03,
-    3.22187477e-03,
-    2.79396418e-03,
-    3.11992762e-03
+  
+    //------------------------------Vitrovex scintillatiion prop--------------
+  
+    G4String DataFile = "../Detector_construction_files/Scintillation_spectra/Vitrovex_scint.txt";
+  std::vector<double> fileFirstColumn = readColumnDouble(DataFile, 1);
+  std::vector<double> fileSecondColumn = readColumnDouble(DataFile, 2);  
+
+  G4double VV_WL[138];
+  G4double VV_I[138];
+  std::copy(fileFirstColumn.begin(), fileFirstColumn.end(), VV_WL);
+  std::copy(fileSecondColumn.begin(), fileSecondColumn.end(), VV_I);
+  
+  for (unsigned int u = 0; u <fileFirstColumn.size(); u++) {
+
+   VV_WL[u] = hc_eVnm / VV_WL[u]*eV;  
+   
+  }
+  
+  G4double FirstCompomentAmplitude_VV[6] = {
+    27.99,
+    24.3,
+    22.5,
+    21.6,
+    21.8,
+    22.6 
   };
   
-  G4double ThirdCompomentAmplitude[5] = {
-    9.37985502e-04,
-    8.57409419e-04,
-    7.53362142e-04,
-    6.70626881e-04,
-    7.18236379e-04 
+    G4double SecondCompomentAmplitude_VV[6] = {
+    38.45,
+    35.9,
+    35.7,
+    35.1,
+    34.0,
+    33.6
   };
   
-  G4double FirstTime[5] = {
-    200.235250835*ns,
-    207.368858907*ns,
-    221.330366343*ns,
-    246.15527870*ns,
-    204.9615*ns 
+
+  
+    G4double FirstTime_VV[6] = {
+    406.*ns,
+    356.*ns,
+    334.*ns,
+    323.*ns,
+    321.*ns,
+    377.*ns 
   };
   
-  G4double SecondTime[5] = {
-    1543.61044827*ns,
-    1681.26113657*ns,
-    1806.1209032*ns,
-    1979.83710164*ns,
-    1647.6259*ns
+    G4double SecondTime_VV[6] = {
+    2984.*ns,
+    2839.*ns,
+    2698.*ns,
+    2657.*ns,
+    2631.*ns,
+    2985.*ns
   };
   
-  G4double ThirdTime[5] = {
-    11851.7691222*ns,
-    12832.1823583*ns,
-    14405.5681616*ns,
-    15307.2132678*ns,
-    14335.53*ns
+    G4double ThirdTime_VV[6] = {
+    18703.*ns,
+    19305.*ns,
+    18641.*ns,
+    20075.*ns,
+    19304.*ns,
+    23541.*ns
   };
   
+  //------------------------------Benthos scintillatiion prop--------------
+  
+   DataFile = "../Detector_construction_files/Scintillation_spectra/Benthos_corrected.txt";
+   fileFirstColumn = readColumnDouble(DataFile, 1);
+   fileSecondColumn = readColumnDouble(DataFile, 2);  
+
+  G4double Bt_WL[125];
+  G4double Bt_I[125];
+  std::copy(fileFirstColumn.begin(), fileFirstColumn.end(), Bt_WL);
+  std::copy(fileSecondColumn.begin(), fileSecondColumn.end(), Bt_I);
+  
+  for (unsigned int u = 0; u <fileFirstColumn.size(); u++) {
+
+   Bt_WL[u] = hc_eVnm / Bt_WL[u]*eV;  
+   
+  }
+  
+    G4double FirstCompomentAmplitude_Bt[5] = {
+    30.7,
+    30.1,
+    28.5,
+    28.1,
+    27.2 
+  };
+  
+    G4double SecondCompomentAmplitude_Bt[5] = {
+    30.5,
+    31.9,
+    31.2,
+    31.2,
+    31.0
+  };
+  
+
+  
+    G4double FirstTime_Bt[5] = {
+    357.*ns,
+    391.*ns,
+    321.*ns,
+    345.*ns,
+    308.*ns 
+  };
+  
+    G4double SecondTime_Bt[5] = {
+    2746.*ns,
+    3037.*ns,
+    2516.*ns,
+    2523.*ns,
+    2383.*ns
+  };
+  
+    G4double ThirdTime_Bt[5] = {
+    18241.*ns,
+    20015.*ns,
+    19457.*ns,
+    17626.*ns,
+    16910.*ns
+  };
   
   
   
@@ -939,12 +1958,13 @@ G4VPhysicalVolume* mdomDetectorConstruction::Construct() {
   
   // VitroVex glass
   G4MaterialPropertiesTable* proptable_VitrovexGlass = new G4MaterialPropertiesTable();
-  
+  G4MaterialPropertiesTable* proptable_KoppGlass = new G4MaterialPropertiesTable();
   //----------------_Scintillation-----------
   G4double scintYield=gscintYield/MeV;
   G4double sctintTimeConst = gscintTimeConst*ns;
   G4double sTemperature = gTemperature;
   G4int tempIndex;
+  G4int tempIndexVitro;
   if (sTemperature>-15 || sTemperature < -50){
     G4cout << "Selected Temperature out of range. Data goes from -50C to -15C. Simulation will use default temperature -35C." << G4endl;
     sTemperature = -35;
@@ -960,27 +1980,61 @@ G4VPhysicalVolume* mdomDetectorConstruction::Construct() {
     
   };
   
+    for (int i = 0; i < sizeof(TemperatureVitrovex); ++i)
+  {
+    
+    if (TemperatureVitrovex[i] == sTemperature){
+      tempIndexVitro = i;
+      
+    }
+    
+  };
   proptable_VitrovexGlass->AddConstProperty("SCINTILLATIONYIELD",scintYield);
-  proptable_VitrovexGlass->AddConstProperty("FIRSTAMPLITUDE",FirstCompomentAmplitude[tempIndex]);
-  proptable_VitrovexGlass->AddConstProperty("SECONDAMPLITUDE",SecondCompomentAmplitude[tempIndex]);
-  proptable_VitrovexGlass->AddConstProperty("THIRDAMPLITUDE",ThirdCompomentAmplitude[tempIndex]);
-  
-  proptable_VitrovexGlass->AddProperty("FIRSTCOMPONENT",Scnt_PP,Scnt_SLOW,32);
-  proptable_VitrovexGlass->AddProperty("SECONDCOMPONENT",Scnt_PP,Scnt_SLOW,32);
-  proptable_VitrovexGlass->AddProperty("THIRDCOMPONENT",Scnt_PP,Scnt_SLOW,32);
-  
-  proptable_VitrovexGlass->AddConstProperty("FIRSTTIME",FirstTime[tempIndex]);
-  proptable_VitrovexGlass->AddConstProperty("SECONDTIME",SecondTime[tempIndex]);
-  proptable_VitrovexGlass->AddConstProperty("THIRDTIME",ThirdTime[tempIndex]);
-  
-  proptable_VitrovexGlass->AddConstProperty("RESOLUTIONSCALE", 1.0);
-  
-  
-  //----------------_Scintillation-----------
-    for (unsigned int u = 0; u <49; u++) {
-    G4cout << GeneralRIndPhotonEnergy[u] << " "  << VitroVexGlassRInd[u] <<  G4endl;
-  }
 
+  
+  proptable_VitrovexGlass->AddConstProperty("FIRSTAMPLITUDE",FirstCompomentAmplitude_VV[tempIndexVitro]);
+  proptable_VitrovexGlass->AddConstProperty("SECONDAMPLITUDE",SecondCompomentAmplitude_VV[tempIndexVitro]);
+  proptable_VitrovexGlass->AddConstProperty("THIRDAMPLITUDE",  100.- FirstCompomentAmplitude_VV[tempIndexVitro] - SecondCompomentAmplitude_VV[tempIndex]);            //ThirdCompomentAmplitude[tempIndex]);
+
+  proptable_VitrovexGlass->AddProperty("FIRSTCOMPONENT",VV_WL,VV_I,138);
+  proptable_VitrovexGlass->AddProperty("SECONDCOMPONENT",VV_WL,VV_I,138);
+  proptable_VitrovexGlass->AddProperty("THIRDCOMPONENT",VV_WL,VV_I,138);
+  
+  
+  proptable_VitrovexGlass->AddConstProperty("FIRSTTIME",FirstTime_VV[tempIndexVitro]);
+  proptable_VitrovexGlass->AddConstProperty("SECONDTIME",SecondTime_VV[tempIndexVitro]);
+  proptable_VitrovexGlass->AddConstProperty("THIRDTIME",ThirdTime_VV[tempIndexVitro]);
+
+  proptable_VitrovexGlass->AddConstProperty("RESOLUTIONSCALE", 1.0);
+
+  
+  
+  proptable_KoppGlass->AddConstProperty("SCINTILLATIONYIELD",scintYield);
+
+  proptable_KoppGlass->AddConstProperty("FIRSTAMPLITUDE",FirstCompomentAmplitude_Bt[tempIndex]);
+  proptable_KoppGlass->AddConstProperty("SECONDAMPLITUDE",SecondCompomentAmplitude_Bt[tempIndex]);
+  proptable_KoppGlass->AddConstProperty("THIRDAMPLITUDE",  100.- FirstCompomentAmplitude_Bt[tempIndex] - SecondCompomentAmplitude_Bt[tempIndex]);            //ThirdCompomentAmplitude[tempIndex]);
+
+  proptable_KoppGlass->AddProperty("FIRSTCOMPONENT",Bt_WL,Bt_I,125);
+  proptable_KoppGlass->AddProperty("SECONDCOMPONENT",Bt_WL,Bt_I,125);
+  proptable_KoppGlass->AddProperty("THIRDCOMPONENT",Bt_WL,Bt_I,125);
+  
+  
+  proptable_KoppGlass->AddConstProperty("FIRSTTIME",FirstTime_Bt[tempIndex]);
+  proptable_KoppGlass->AddConstProperty("SECONDTIME",SecondTime_Bt[tempIndex]);
+  proptable_KoppGlass->AddConstProperty("THIRDTIME",ThirdTime_Bt[tempIndex]);
+
+  proptable_KoppGlass->AddConstProperty("RESOLUTIONSCALE", 1.0);
+
+  
+  
+  
+  
+  
+  
+
+  //----------------/Scintillation-----------
+  
   proptable_VitrovexGlass->AddProperty("RINDEX", GeneralRIndPhotonEnergy, VitroVexGlassRInd, 49);
   proptable_VitrovexGlass->AddProperty("ABSLENGTH", VitroVexGlassPhotonEnergy, VitroVexGlassAbsLen,35);
   
@@ -990,14 +2044,12 @@ G4VPhysicalVolume* mdomDetectorConstruction::Construct() {
   proptable_ChibaGlass->AddProperty("ABSLENGTH", ChibaGlassAbsPhotonEnergy, ChibaGlassAbsLen, 37);
   
   // IceCube glass (aka Benthos, aka Kopp 9500) using Chiba RINDEX !!
-  G4MaterialPropertiesTable* proptable_KoppGlass = new G4MaterialPropertiesTable();
+  
   proptable_KoppGlass->AddProperty("RINDEX", GeneralRIndPhotonEnergy, ChibaGlassRInd, 49);
   proptable_KoppGlass->AddProperty("ABSLENGTH", IceCubeGlassPhotonEnergy, IceCubeGlassAbsLen,37);
   
   
   // myVitroVex glass (values deduced from my measurement)
-  
-  
   G4MaterialPropertiesTable* proptable_myVitrovexGlass = new G4MaterialPropertiesTable();
   proptable_myVitrovexGlass->AddProperty("RINDEX", GeneralRIndPhotonEnergy, VitroVexGlassRInd, 49);
   proptable_myVitrovexGlass->AddProperty("ABSLENGTH", myVitroVexGlassPhotonEnergy, myVitroVexGlassAbsLen, 82);
@@ -1050,98 +2102,643 @@ G4VPhysicalVolume* mdomDetectorConstruction::Construct() {
   G4double WackerGelRInd[49];
   for (i = 0; i < 49; i++) { WackerGelRInd[i] = 1.404; }
   
-  DataFile = "../Detector_construction_files/Abs_length/Wacker_gel.txt";
-  fileFirstColumn = readColumnDouble(DataFile, 1);
-  fileSecondColumn = readColumnDouble(DataFile, 2);  
+  G4double WackerGelPhotonEnergy[34] = {
+    
+    hc_eVnm / 250.0*eV,
+    hc_eVnm / 300.0*eV,
+    hc_eVnm / 310.0*eV,
+    hc_eVnm / 320.0*eV,
+    hc_eVnm / 330.0*eV,
+    hc_eVnm / 340.0*eV,
+    hc_eVnm / 350.0*eV,
+    hc_eVnm / 360.0*eV,
+    hc_eVnm / 370.0*eV,
+    hc_eVnm / 380.0*eV,
+    hc_eVnm / 390.0*eV,
+    hc_eVnm / 400.0*eV,
+    hc_eVnm / 410.0*eV,
+    hc_eVnm / 420.0*eV,
+    hc_eVnm / 430.0*eV,
+    hc_eVnm / 440.0*eV,
+    hc_eVnm / 450.0*eV,
+    hc_eVnm / 460.0*eV,
+    hc_eVnm / 470.0*eV,
+    hc_eVnm / 480.0*eV,
+    hc_eVnm / 490.0*eV,
+    hc_eVnm / 500.0*eV,
+    hc_eVnm / 510.0*eV,
+    hc_eVnm / 520.0*eV,
+    hc_eVnm / 530.0*eV,
+    hc_eVnm / 540.0*eV,
+    hc_eVnm / 550.0*eV,
+    hc_eVnm / 560.0*eV,
+    hc_eVnm / 570.0*eV,
+    hc_eVnm / 580.0*eV,
+    hc_eVnm / 590.0*eV,
+    hc_eVnm / 600.0*eV,
+    hc_eVnm / 610.0*eV,
+    hc_eVnm / 730.0*eV
+  };
   
-  G4double WackerGelPhotonEnergy[34];
-  G4double WackerGelAbsLen[34];
-  std::copy(fileFirstColumn.begin(), fileFirstColumn.end(), WackerGelPhotonEnergy);
-  std::copy(fileSecondColumn.begin(), fileSecondColumn.end(), WackerGelAbsLen);
-  
-  for (unsigned int u = 0; u <fileFirstColumn.size(); u++) {
-    WackerGelPhotonEnergy[u] = hc_eVnm / WackerGelPhotonEnergy[u]*eV;  
-    WackerGelAbsLen[u] = WackerGelAbsLen[u]*mm; 
-  }
-
-  
+  G4double WackerGelAbsLen[34] = {
+    
+    0.0*mm,
+    0.0*mm,
+    80.0*mm,
+    156.0*mm,
+    230.8*mm,
+    304.9*mm,
+    371.4*mm,
+    418.8*mm,
+    457.1*mm,
+    489.6*mm,
+    532.9*mm,
+    566.4*mm,
+    593.8*mm,
+    625.3*mm,
+    644.8*mm,
+    669.1*mm,
+    680.5*mm,
+    723.1*mm,
+    745.5*mm,
+    764.8*mm,
+    781.8*mm,
+    810.8*mm,
+    844.9*mm,
+    858.8*mm,
+    869.5*mm,
+    901.0*mm,
+    890.9*mm,
+    943.6*mm,
+    964.2*mm,
+    969.0*mm,
+    998.9*mm,
+    999.4*mm,
+    1008.1*mm,
+    1008.1*mm
+  };
   
   // ---------------------- Chiba gel ----------------------------------------------------------
+  G4double ChibaGelRInd[49] = {
+    
+    1.4659,
+    1.4586,
+    1.4524,
+    1.4469,
+    1.4421,
+    1.4379,
+    1.4341,
+    1.4308,
+    1.4277,
+    1.4250,
+    1.4226,
+    1.4203,
+    1.4183,
+    1.4164,
+    1.4147,
+    1.4132,
+    1.4117,
+    1.4104,
+    1.4092,
+    1.4081,
+    1.4070,
+    1.4060,
+    1.4051,
+    1.4042,
+    1.4034,
+    1.4027,
+    1.4020,
+    1.4013,
+    1.4007,
+    1.4001,
+    1.3995,
+    1.3990,
+    1.3985,
+    1.3980,
+    1.3976,
+    1.3972,
+    1.3968,
+    1.3964,
+    1.3960,
+    1.3957,
+    1.3954,
+    1.3951,
+    1.3948,
+    1.3945,
+    1.3942,
+    1.3939,
+    1.3937,
+    1.3935,
+    1.3932
+  };
   
-  DataFile = "../Detector_construction_files/Refractive_index/Chiba_gel.txt";
-  fileFirstColumn = readColumnDouble(DataFile, 1);
+  G4double ChibaGelPhotonEnergy[17] = {
+    
+    hc_eVnm / 250.0*eV,
+    hc_eVnm / 260.0*eV,
+    hc_eVnm / 274.0*eV,
+    hc_eVnm / 284.0*eV,
+    hc_eVnm / 294.0*eV,
+    hc_eVnm / 304.0*eV,
+    hc_eVnm / 314.0*eV,
+    hc_eVnm / 324.0*eV,
+    hc_eVnm / 334.0*eV,
+    hc_eVnm / 344.0*eV,
+    hc_eVnm / 354.0*eV,
+    hc_eVnm / 364.0*eV,
+    hc_eVnm / 374.0*eV,
+    hc_eVnm / 384.0*eV,
+    hc_eVnm / 394.0*eV,
+    hc_eVnm / 400.0*eV,
+    hc_eVnm / 730.0*eV
+  };
   
-  G4double ChibaGelRInd[49];
-  std::copy(fileFirstColumn.begin(), fileFirstColumn.end(), ChibaGelRInd);
-  
-  DataFile = "../Detector_construction_files/Abs_length/Chiba_gel.txt";
-  fileFirstColumn = readColumnDouble(DataFile, 1);
-  fileSecondColumn = readColumnDouble(DataFile, 2);  
-  
-  G4double ChibaGelPhotonEnergy[17];
-  G4double ChibaGelAbsLen[17];
-  std::copy(fileFirstColumn.begin(), fileFirstColumn.end(), ChibaGelPhotonEnergy);
-  std::copy(fileSecondColumn.begin(), fileSecondColumn.end(), ChibaGelAbsLen);
-  
-  for (unsigned int u = 0; u <fileFirstColumn.size(); u++) {
-    ChibaGelPhotonEnergy[u] = hc_eVnm / ChibaGelPhotonEnergy[u]*eV;  
-    ChibaGelAbsLen[u] = ChibaGelAbsLen[u]*mm; 
-  }
-  
+  G4double ChibaGelAbsLen[17] = {
+    
+    7.8*mm,		//really??
+    8.2*mm,
+    18.6*mm,
+    65.3*mm,
+    281.4*mm,
+    583.2*mm,
+    854.8*mm,
+    1192.8*mm,
+    1506.8*mm,
+    1927.2*mm,
+    2376.6*mm,
+    2811.9*mm,
+    3293.1*mm,
+    4262.8*mm,
+    4943.5*mm,
+    5000.0*mm,
+    5000.0*mm
+  };
   
   // ----------------------- IceCube gel ---------------------------------------------------
   G4double IceCubeGelRInd[49];
   for (i = 0; i < 49; i++) { IceCubeGelRInd[i] = 1.404; }
   
-  DataFile = "../Detector_construction_files/Abs_length/IceCube_gel.txt";
-  fileFirstColumn = readColumnDouble(DataFile, 1);
-  fileSecondColumn = readColumnDouble(DataFile, 2);  
-
-  G4double IceCubeGelPhotonEnergy[36];
-  G4double IceCubeGelAbsLen[36];
-  std::copy(fileFirstColumn.begin(), fileFirstColumn.end(), IceCubeGelPhotonEnergy);
-  std::copy(fileSecondColumn.begin(), fileSecondColumn.end(), IceCubeGelAbsLen);
+  G4double IceCubeGelPhotonEnergy[36] = {
+    
+    hc_eVnm / 250.0*eV,
+    hc_eVnm / 270.0*eV,
+    hc_eVnm / 280.0*eV,
+    hc_eVnm / 290.0*eV,
+    hc_eVnm / 300.0*eV,
+    hc_eVnm / 310.0*eV,
+    hc_eVnm / 320.0*eV,
+    hc_eVnm / 330.0*eV,
+    hc_eVnm / 340.0*eV,
+    hc_eVnm / 350.0*eV,
+    hc_eVnm / 360.0*eV,
+    hc_eVnm / 370.0*eV,
+    hc_eVnm / 380.0*eV,
+    hc_eVnm / 390.0*eV,
+    hc_eVnm / 400.0*eV,
+    hc_eVnm / 410.0*eV,
+    hc_eVnm / 420.0*eV,
+    hc_eVnm / 430.0*eV,
+    hc_eVnm / 440.0*eV,
+    hc_eVnm / 450.0*eV,
+    hc_eVnm / 460.0*eV,
+    hc_eVnm / 470.0*eV,
+    hc_eVnm / 480.0*eV,
+    hc_eVnm / 490.0*eV,
+    hc_eVnm / 500.0*eV,
+    hc_eVnm / 510.0*eV,
+    hc_eVnm / 520.0*eV,
+    hc_eVnm / 530.0*eV,
+    hc_eVnm / 540.0*eV,
+    hc_eVnm / 550.0*eV,
+    hc_eVnm / 560.0*eV,
+    hc_eVnm / 570.0*eV,
+    hc_eVnm / 580.0*eV,
+    hc_eVnm / 590.0*eV,
+    hc_eVnm / 600.0*eV,
+    hc_eVnm / 730.0*eV
+  };
   
-  for (unsigned int u = 0; u <fileFirstColumn.size(); u++) {
-    IceCubeGelPhotonEnergy[u] = hc_eVnm / IceCubeGelPhotonEnergy[u]*eV;  
-    IceCubeGelAbsLen[u] = IceCubeGelAbsLen[u]*mm; 
-  }
-  
+  G4double IceCubeGelAbsLen[36] = {
+    
+    0.0*mm,
+    0.0*mm,
+    1.8*mm,
+    12.3*mm,
+    23.4*mm,
+    39.0*mm,
+    58.4*mm,
+    80.1*mm,
+    105.4*mm,
+    138.8*mm,
+    168.0*mm,
+    203.3*mm,
+    239.5*mm,
+    254.0*mm,
+    283.2*mm,
+    308.5*mm,
+    339.8*mm,
+    354.7*mm,
+    378.1*mm,
+    406.5*mm,
+    431.7*mm,
+    462.3*mm,
+    485.2*mm,
+    510.4*mm,
+    538.5*mm,
+    579.8*mm,
+    608.5*mm,
+    631.9*mm,
+    648.6*mm,
+    719.6*mm,
+    741.3*mm,
+    776.2*mm,
+    808.0*mm,
+    849.7*mm,
+    849.7*mm,
+    849.7*mm
+  };
   
   // ------------------------ Wacker gel with company data at UV ---------------------
   // data below 300 nm taken from transmission measurement of 5mm gel, provided by company 
   
-  DataFile = "../Detector_construction_files/Refractive_index/Wacker_company.txt";
-  fileFirstColumn = readColumnDouble(DataFile, 1);
-  fileSecondColumn = readColumnDouble(DataFile, 2);  
+  G4double WackerCompanyGelRIndPhotonEnergy[59] = {
+    
+    hc_eVnm / 150*eV,
+    hc_eVnm / 160*eV,
+    hc_eVnm / 170*eV,
+    hc_eVnm / 180*eV,
+    hc_eVnm / 190*eV,
+    hc_eVnm / 200*eV,
+    hc_eVnm / 210*eV,
+    hc_eVnm / 220*eV,
+    hc_eVnm / 230*eV,
+    hc_eVnm / 240*eV,
+    hc_eVnm / 250*eV,
+    hc_eVnm / 260*eV,
+    hc_eVnm / 270*eV,
+    hc_eVnm / 280*eV,
+    hc_eVnm / 290*eV,
+    hc_eVnm / 300*eV,
+    hc_eVnm / 310*eV,
+    hc_eVnm / 320*eV,
+    hc_eVnm / 330*eV,
+    hc_eVnm / 340*eV,
+    hc_eVnm / 350*eV,
+    hc_eVnm / 360*eV,
+    hc_eVnm / 370*eV,
+    hc_eVnm / 380*eV,
+    hc_eVnm / 390*eV,
+    hc_eVnm / 400*eV,
+    hc_eVnm / 410*eV,
+    hc_eVnm / 420*eV,
+    hc_eVnm / 430*eV,
+    hc_eVnm / 440*eV,
+    hc_eVnm / 450*eV,
+    hc_eVnm / 460*eV,
+    hc_eVnm / 470*eV,
+    hc_eVnm / 480*eV,
+    hc_eVnm / 490*eV,
+    hc_eVnm / 500*eV,
+    hc_eVnm / 510*eV,
+    hc_eVnm / 520*eV,
+    hc_eVnm / 530*eV,
+    hc_eVnm / 540*eV,
+    hc_eVnm / 550*eV,
+    hc_eVnm / 560*eV,
+    hc_eVnm / 570*eV,
+    hc_eVnm / 580*eV,
+    hc_eVnm / 590*eV,
+    hc_eVnm / 600*eV,
+    hc_eVnm / 610*eV,
+    hc_eVnm / 620*eV,
+    hc_eVnm / 630*eV,
+    hc_eVnm / 640*eV,
+    hc_eVnm / 650*eV,
+    hc_eVnm / 660*eV,
+    hc_eVnm / 670*eV,
+    hc_eVnm / 680*eV,
+    hc_eVnm / 690*eV,
+    hc_eVnm / 700*eV,
+    hc_eVnm / 710*eV,
+    hc_eVnm / 720*eV,
+    hc_eVnm / 730*eV
+  };
+  
+  G4double WackerCompanyGelRInd[59] = {
+    
+    1.7412,
+    1.6667,
+    1.6155,
+    1.5782,
+    1.5500,
+    1.5280,
+    1.5104,
+    1.4961,
+    1.4843,
+    1.4743,
+    1.4659,
+    1.4586,
+    1.4524,
+    1.4469,
+    1.4421,
+    1.4379,
+    1.4341,
+    1.4308,
+    1.4277,
+    1.4250,
+    1.4226,
+    1.4203,
+    1.4183,
+    1.4164,
+    1.4147,
+    1.4132,
+    1.4117,
+    1.4104,
+    1.4092,
+    1.4081,
+    1.4070,
+    1.4060,
+    1.4051,
+    1.4042,
+    1.4034,
+    1.4027,
+    1.4020,
+    1.4013,
+    1.4007,
+    1.4001,
+    1.3995,
+    1.3990,
+    1.3985,
+    1.3980,
+    1.3976,
+    1.3972,
+    1.3968,
+    1.3964,
+    1.3960,
+    1.3957,
+    1.3954,
+    1.3951,
+    1.3948,
+    1.3945,
+    1.3942,
+    1.3939,
+    1.3937,
+    1.3935,
+    1.3932
+  };
+  
+  G4double WackerCompanyGelPhotonEnergy[41] = {
+    
+    hc_eVnm / 150*eV,
+    hc_eVnm / 210.2*eV,
+    hc_eVnm / 214.0*eV,
+    hc_eVnm / 217.8*eV,
+    hc_eVnm / 219.1*eV,
+    hc_eVnm / 222.9*eV,
+    hc_eVnm / 228.0*eV,
+    hc_eVnm / 238.1*eV,
+    hc_eVnm / 250.8*eV,
+    hc_eVnm / 268.6*eV,
+    hc_eVnm / 299.1*eV,
+    hc_eVnm / 330.0*eV,
+    hc_eVnm / 340.0*eV,
+    hc_eVnm / 350.0*eV,
+    hc_eVnm / 360.0*eV,
+    hc_eVnm / 370.0*eV,
+    hc_eVnm / 380.0*eV,
+    hc_eVnm / 390.0*eV,
+    hc_eVnm / 400.0*eV,
+    hc_eVnm / 410.0*eV,
+    hc_eVnm / 420.0*eV,
+    hc_eVnm / 430.0*eV,
+    hc_eVnm / 440.0*eV,
+    hc_eVnm / 450.0*eV,
+    hc_eVnm / 460.0*eV,
+    hc_eVnm / 470.0*eV,
+    hc_eVnm / 480.0*eV,
+    hc_eVnm / 490.0*eV,
+    hc_eVnm / 500.0*eV,
+    hc_eVnm / 510.0*eV,
+    hc_eVnm / 520.0*eV,
+    hc_eVnm / 530.0*eV,
+    hc_eVnm / 540.0*eV,
+    hc_eVnm / 550.0*eV,
+    hc_eVnm / 560.0*eV,
+    hc_eVnm / 570.0*eV,
+    hc_eVnm / 580.0*eV,
+    hc_eVnm / 590.0*eV,
+    hc_eVnm / 600.0*eV,
+    hc_eVnm / 610.0*eV,
+    hc_eVnm / 730.0*eV
+  };
+  
+  G4double WackerCompanyGelAbsLen[41] = {
+    
+    0*mm,
+    0.9*mm,
+    1.6*mm,
+    2.3*mm,
+    3.2*mm,
+    4.5*mm,
+    6.5*mm,
+    13.0*mm,
+    21.5*mm,
+    33.2*mm,
+    54.5*mm,
+    230.8*mm,
+    304.9*mm,
+    371.4*mm,
+    418.8*mm,
+    457.1*mm,
+    489.6*mm,
+    532.9*mm,
+    566.4*mm,
+    593.8*mm,
+    625.3*mm,
+    644.8*mm,
+    669.1*mm,
+    680.5*mm,
+    723.1*mm,
+    745.5*mm,
+    764.8*mm,
+    781.8*mm,
+    810.8*mm,
+    844.9*mm,
+    858.8*mm,
+    869.5*mm,
+    901.0*mm,
+    890.9*mm,
+    943.6*mm,
+    964.2*mm,
+    969.0*mm,
+    998.9*mm,
+    999.4*mm,
+    1008.1*mm,
+    1008.1*mm
+  };
+  
+  
+  
+  
+  //------------------------------QSI scintillatiion prop--------------
+  
+   DataFile = "../Detector_construction_files/Scintillation_spectra/QSI_corrected.txt";
+   fileFirstColumn = readColumnDouble(DataFile, 1);
+   fileSecondColumn = readColumnDouble(DataFile, 2);  
 
-  G4double WackerCompanyGelRIndPhotonEnergy[59];
-  G4double WackerCompanyGelRInd[59];
-  std::copy(fileFirstColumn.begin(), fileFirstColumn.end(), WackerCompanyGelRIndPhotonEnergy);
-  std::copy(fileSecondColumn.begin(), fileSecondColumn.end(), WackerCompanyGelRInd);
+  G4double QSI_WL[42];
+  G4double QSI_I[42];
+  std::copy(fileFirstColumn.begin(), fileFirstColumn.end(), QSI_WL);
+  std::copy(fileSecondColumn.begin(), fileSecondColumn.end(), QSI_I);
   
   for (unsigned int u = 0; u <fileFirstColumn.size(); u++) {
-    WackerCompanyGelRIndPhotonEnergy[u] = hc_eVnm / WackerCompanyGelRIndPhotonEnergy[u]*eV;  
+
+   QSI_WL[u] = hc_eVnm / QSI_WL[u]*eV;  
+   
   }
   
+    G4double FirstCompomentAmplitude_QSI[5] = {
+    92.9,
+    92.8,
+    93.1,
+    93.3,
+    93.0 
+  };
+    G4double SecondCompomentAmplitude_QSI[5] = {
+    2.9,
+    1.4,
+    1.3,
+    0.4,
+    0.2 
+  };
   
-  DataFile = "../Detector_construction_files/Abs_length/Wacker_company.txt";
-  fileFirstColumn = readColumnDouble(DataFile, 1);
-  fileSecondColumn = readColumnDouble(DataFile, 2);  
   
-  G4double WackerCompanyGelPhotonEnergy[41];
-  G4double WackerCompanyGelAbsLen[41];
-  std::copy(fileFirstColumn.begin(), fileFirstColumn.end(), WackerCompanyGelPhotonEnergy);
-  std::copy(fileSecondColumn.begin(), fileSecondColumn.end(), WackerCompanyGelAbsLen);
+    G4double FirstTime_QSI[5] = {
+    1.009*ns,
+    1.100*ns,
+    1.093*ns,
+    1.075*ns,
+    1.064*ns 
+  };
+  
+    G4double SecondTime_QSI[5] = {
+    8.58*ns,
+    11.00*ns,
+    10.68*ns,
+    10.04*ns,
+    10.15*ns
+  };
+      G4double ThirdTime_QSI[5] = {
+    40.9*ns,
+    39.9*ns,
+    50.7*ns,
+    50.6*ns,
+    48.6*ns
+  };
+  
+
+    //------------------------------Wacker scintillatiion prop--------------
+  
+   DataFile = "../Detector_construction_files/Scintillation_spectra/QSI_corrected.txt";
+   fileFirstColumn = readColumnDouble(DataFile, 1);
+   fileSecondColumn = readColumnDouble(DataFile, 2);  
+
+  G4double Wacker_WL[42];
+  G4double Wacker_I[42];
+  std::copy(fileFirstColumn.begin(), fileFirstColumn.end(), Wacker_WL);
+  std::copy(fileSecondColumn.begin(), fileSecondColumn.end(), Wacker_I);
   
   for (unsigned int u = 0; u <fileFirstColumn.size(); u++) {
-    WackerCompanyGelPhotonEnergy[u] = hc_eVnm / WackerCompanyGelPhotonEnergy[u]*eV;  
-    WackerCompanyGelAbsLen[u] = WackerCompanyGelAbsLen[u]*mm; 
+
+   Wacker_WL[u] = hc_eVnm / Wacker_WL[u]*eV;  
+   
   }
+  
+    G4double FirstCompomentAmplitude_Wacker[5] = {
+    86.7,
+    83.4,
+    83.1,
+    82.8,
+    82.3 
+  };
+
+  
+    G4double FirstTime_Wacker[5] = {
+    11.57*ns,
+    12.06*ns,
+    12.71*ns,
+    12.82*ns,
+    13.09*ns 
+  };
+  
+    G4double SecondTime_Wacker[5] = {
+    126*ns,
+    119*ns,
+    119*ns,
+    115*ns,
+    115*ns
+  };
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
   
   // ----------------------- choosing gel for simulation -------------------------------------
   // Wacker SilGel 612 A/B (from KM3NeT data)
   G4MaterialPropertiesTable* proptable_WackerGel = new G4MaterialPropertiesTable();
+  
+  
+  proptable_WackerGel->AddConstProperty("SCINTILLATIONYIELD",0);
+
+  
+  proptable_WackerGel->AddConstProperty("FIRSTAMPLITUDE",FirstCompomentAmplitude_Wacker[tempIndex]);
+  proptable_WackerGel->AddConstProperty("SECONDAMPLITUDE",100.-FirstCompomentAmplitude_Wacker[tempIndex]);
+  proptable_WackerGel->AddConstProperty("THIRDAMPLITUDE",0);            //ThirdCompomentAmplitude[tempIndex]);
+
+  proptable_WackerGel->AddProperty("FIRSTCOMPONENT",Wacker_WL,Wacker_I,42);
+  proptable_WackerGel->AddProperty("SECONDCOMPONENT",Wacker_WL,Wacker_I,42);
+  proptable_WackerGel->AddProperty("THIRDCOMPONENT",Wacker_WL,Wacker_I,42);
+  
+  
+  proptable_WackerGel->AddConstProperty("FIRSTTIME",FirstTime_Wacker[tempIndex]);
+  proptable_WackerGel->AddConstProperty("SECONDTIME",SecondTime_Wacker[tempIndex]);
+  proptable_WackerGel->AddConstProperty("THIRDTIME",0);
+
+  proptable_WackerGel->AddConstProperty("RESOLUTIONSCALE", 1.0);
+  
+  
+  G4MaterialPropertiesTable* proptable_IceCubeGel = new G4MaterialPropertiesTable();
+
+  proptable_IceCubeGel->AddConstProperty("SCINTILLATIONYIELD",0);
+
+  
+  proptable_IceCubeGel->AddConstProperty("FIRSTAMPLITUDE",FirstCompomentAmplitude_QSI[tempIndex]);
+  proptable_IceCubeGel->AddConstProperty("SECONDAMPLITUDE",SecondCompomentAmplitude_QSI[tempIndex]);
+  proptable_IceCubeGel->AddConstProperty("THIRDAMPLITUDE",100.-FirstCompomentAmplitude_QSI[tempIndex]-SecondCompomentAmplitude_QSI[tempIndex]);            //ThirdCompomentAmplitude[tempIndex]);
+
+  proptable_IceCubeGel->AddProperty("FIRSTCOMPONENT",QSI_WL,QSI_I,42);
+  proptable_IceCubeGel->AddProperty("SECONDCOMPONENT",QSI_WL,QSI_I,42);
+  proptable_IceCubeGel->AddProperty("THIRDCOMPONENT",QSI_WL,QSI_I,42);
+  
+  
+  proptable_IceCubeGel->AddConstProperty("FIRSTTIME",FirstTime_QSI[tempIndex]);
+  proptable_IceCubeGel->AddConstProperty("SECONDTIME",SecondTime_QSI[tempIndex]);
+  proptable_IceCubeGel->AddConstProperty("THIRDTIME",ThirdTime_QSI[tempIndex]);
+
+  proptable_IceCubeGel->AddConstProperty("RESOLUTIONSCALE", 1.0);
+  
+  
+  
+  
+  
+  
+  
   proptable_WackerGel->AddProperty("RINDEX", GeneralRIndPhotonEnergy, WackerGelRInd, 49);
   proptable_WackerGel->AddProperty("ABSLENGTH", WackerGelPhotonEnergy, WackerGelAbsLen, 34);
   
@@ -1151,7 +2748,7 @@ G4VPhysicalVolume* mdomDetectorConstruction::Construct() {
   proptable_ChibaGel->AddProperty("ABSLENGTH", ChibaGelPhotonEnergy, ChibaGelAbsLen,36);
   
   // old IceCube gel
-  G4MaterialPropertiesTable* proptable_IceCubeGel = new G4MaterialPropertiesTable();
+  
   proptable_IceCubeGel->AddProperty("RINDEX", GeneralRIndPhotonEnergy, ChibaGelRInd, 49);		// using ChibaGelRInd !!
   proptable_IceCubeGel->AddProperty("ABSLENGTH", IceCubeGelPhotonEnergy, IceCubeGelAbsLen,17);
   
@@ -1177,22 +2774,28 @@ G4VPhysicalVolume* mdomDetectorConstruction::Construct() {
   // ------------------------ air & vacuum ---------------------------------------------------
   
   
-  
-  DataFile = "../Detector_construction_files/Scintillation_spectra/air.txt";
-  fileFirstColumn = readColumnDouble(DataFile, 1);
-  fileSecondColumn = readColumnDouble(DataFile, 2);  
 
-  G4double airScintWLD[367];
-  G4double airScintInD[367];
+  
+  G4String AirSpectrumFile = "../Detector_construction_files/Scintillation_spectra/air.txt";
+  fileFirstColumn = readColumnDouble(AirSpectrumFile, 1);
+  fileSecondColumn = readColumnDouble(AirSpectrumFile, 2);  
+  //G4double* airScintWL = &
+  G4int ArraySize = fileFirstColumn.size();
+  
+  G4double airScintWLD[ArraySize];
+  G4double airScintInD[ArraySize];
+  
+  G4cout << ArraySize << G4endl;
   
   for (unsigned int u = 0; u <fileFirstColumn.size(); u++) {
     airScintWLD[u] = hc_eVnm / fileFirstColumn.at(u)*eV;  
     airScintInD[u] = fileSecondColumn.at(u);
   }
-  
+
   G4MaterialPropertiesTable* proptable_air = new G4MaterialPropertiesTable();
   
-  proptable_air->AddConstProperty("SCINTILLATIONYIELD",scintYield);
+  scintYield=gscintYield/MeV;
+  proptable_air->AddConstProperty("SCINTILLATIONYIELD",0);
   proptable_air->AddConstProperty("FIRSTAMPLITUDE",1);
   proptable_air->AddConstProperty("SECONDAMPLITUDE",0);
   proptable_air->AddConstProperty("THIRDAMPLITUDE",0);
@@ -1201,13 +2804,13 @@ G4VPhysicalVolume* mdomDetectorConstruction::Construct() {
   proptable_air->AddProperty("SECONDCOMPONENT",airScintWLD,airScintInD, ArraySize);
   proptable_air->AddProperty("THIRDCOMPONENT",airScintWLD,airScintInD, ArraySize);
   
-  proptable_air->AddConstProperty("FIRSTTIME",2*ns);
+  proptable_air->AddConstProperty("FIRSTTIME",0.5*ns);
   proptable_air->AddConstProperty("SECONDTIME",0);
   proptable_air->AddConstProperty("THIRDTIME",0);
-  
+
   proptable_air->AddConstProperty("RESOLUTIONSCALE", 1.0);
-  
-  
+
+
   G4double VacuumPhotonEnergy[2] = {PHOTON_NRG_MIN, PHOTON_NRG_MAX};
   G4double VacuumRidx[2] = {1.0003, 1.0003};
   G4MaterialPropertiesTable* proptable_vacuum = new G4MaterialPropertiesTable();
@@ -1954,156 +3557,47 @@ G4VPhysicalVolume* mdomDetectorConstruction::Construct() {
   
   
   if (OM_type == "halfmDOM2") {
-    G4double singlePMT_z = CylHigh + GlasInRad - GelPMT - PMToffset;
+    G4double singlePMT_z = CylHigh*0 + 0.5*12*25.4*mm -(48.)*0.5*mm;// - GelPMT - PMToffset;
     
     // Glass
-    G4Ellipsoid* single_GlassSphereTop_solid = new G4Ellipsoid("single_GlassSphereTop solid", GlasOutRad, GlasOutRad, GlasOutRad, -5*mm, GlasOutRad+5*mm);
-    G4Tubs* single_GlassCylinder_solid = new G4Tubs("single_GlassCylinder solid", 0, GlasOutRad, CylHigh, 0, 2*pi);
-    transformers = G4Transform3D(G4RotationMatrix(), G4ThreeVector(0,0,CylHigh ));
-    G4UnionSolid* single_Glass_solid = new G4UnionSolid("single_glass_body", single_GlassCylinder_solid, single_GlassSphereTop_solid, transformers);
+    G4Sphere* single_Glass_solid = new G4Sphere("GlassSphere solid",0.5*12*25.4*mm,0.5*13*25.4*mm, 0*deg, 360*deg, 0*deg, 90*deg);
+
+    
+    
     G4LogicalVolume* single_Glass_logical = new G4LogicalVolume (single_Glass_solid, Mat_Vessel_Glass, "single_Glasscorpus logical");
+
+
+    PMT_physical[0] = new G4PVPlacement (0, G4ThreeVector(0,0,(singlePMT_z)), PMT_12199_tube_logical, "PMT_0_physical", World_logical, true, 0);
+  
     
-    
-    // two half-vessels:
-    //G4LogicalVolume* single_Glass_logical = new G4LogicalVolume (Glass_solid, Mat_Vessel_Glass, "single_Glasscorpus logical");
-    
-    
-    
-    //  Gel
-    G4Ellipsoid* single_Gel_solid1 = new G4Ellipsoid("GelSphereTop solid", GlasInRad, GlasInRad, GlasInRad, 120*mm, GlasInRad+5*mm);
-    //G4Tubs* single_GelCylinder_solid = new G4Tubs("single_GelCylinder solid", 0, GlasOutRad - GlasThick, CylHigh , 0, 2*pi);
-    //transformers = G4Transform3D(G4RotationMatrix(), G4ThreeVector(0,0,CylHigh ));
-    //G4UnionSolid* single_Gel_solid = new G4UnionSolid("single_gel_body", single_GelCylinder_solid, single_GelSphereTop_solid, transformers);
-    
-    
-    
-    //  Gel
-    G4Ellipsoid* single_GelSphereTop_solid2 = new G4Ellipsoid("GelSphereTop solid", GlasInRad, GlasInRad, GlasInRad, -5*mm, GlasInRad+5*mm);
-    GelSphereBottom_solid = new G4Ellipsoid("GelSphereBottom solid", GlasInRad, GlasInRad, GlasInRad, -(GlasInRad+5*mm), 5*mm);
-    G4Tubs* single_GelCylinder_solid2 = new G4Tubs("single_GelCylinder solid", 0, GlasOutRad - GlasThick-0.01*mm, CylHigh , 0, 2*pi);
-    transformers = G4Transform3D(G4RotationMatrix(), G4ThreeVector(0,0,CylHigh ));
-    G4UnionSolid* single_Gel_solid2 = new G4UnionSolid("single_gel_body", single_GelCylinder_solid2, single_GelSphereTop_solid2, transformers);
-    
-    // two half-vessels:
-    // transformers = G4Transform3D(G4RotationMatrix(), G4ThreeVector(0,0,-CylHigh));
-    //single_Gel_solid2  = new G4UnionSolid("gel body", single_Gel_solid2 , GelSphereBottom_solid, transformers);
-    
-    
-    
-    
-    
-    G4double FoamRad = GlasOutRad - GlasThick - GelThick;
-    G4Ellipsoid* FoamSphereTop_solid  = new G4Ellipsoid("FoamSphereTop solid", GlasInRad, GlasInRad, GlasInRad, -5*mm, GlasInRad+5*mm);
-    G4Tubs* single_FoamCylinder_solid = new G4Tubs("single FoamCylinder solid", 0, GlasOutRad - GlasThick, CylHigh , 0, 2*pi);
-    transformers = G4Transform3D(G4RotationMatrix(), G4ThreeVector(0,0,(CylHigh )));
-    G4UnionSolid* single_Foam_solid = new G4UnionSolid("single Foam solid", single_FoamCylinder_solid, FoamSphereTop_solid, transformers);
-    //----------------two vessels:
-    // G4Ellipsoid* FoamSphereBottom_solid = new G4Ellipsoid("FoamSphereBottom solid", GlasInRad, GlasInRad, GlasInRad, -(GlasInRad+5*mm), 5*mm);		
-    // transformers = G4Transform3D(G4RotationMatrix(), G4ThreeVector(0,0,-(CylHigh )));
-    // single_Foam_solid = new G4UnionSolid("Foam solid", single_Foam_solid, FoamSphereBottom_solid, transformers);
-    //-----------------------------
-    
-    // REF CONE------------------------------
-    RefConeBasic_solid = new G4Cons("RefConeBasic", 
-				    RefCone_IdealInRad, 
-				    RefCone_IdealInRad + RefCone_SheetThickness*std::sqrt(2.), 
-				    RefCone_IdealInRad + 2*RefConeDZ, 
-				    RefCone_IdealInRad + RefCone_SheetThickness*std::sqrt(2.) + 2*RefConeDZ, 
-				    RefConeDZ, 0, 2*pi);
-    rot = new G4RotationMatrix();
-    transformers = G4Transform3D(*rot, G4ThreeVector(0,0,-(GlasInRad-GelPMT-PMToffset+RefConeDZ)));
-    RefConeType1_solid = new G4IntersectionSolid("RefConeType1", RefConeBasic_solid, FoamSphereTop_solid,transformers);
-    
-    // ABS CONE------------------------------
-    G4VSolid* RefConeBasic_solid22 = new G4Cons("RefConeBasic2", 
-						0.5*51.9*mm, 
-						0.5*51.9*mm+RefCone_SheetThickness*std::sqrt(2.), 
-						RefCone_IdealInRad + 1.7*RefConeDZ+1*RefCone_SheetThickness*std::sqrt(2.), 
-						RefCone_IdealInRad + 2*RefCone_SheetThickness*std::sqrt(2.) + 1.7*RefConeDZ, 
-						RefConeDZ*2.28, 0, 2*pi);
-    transformers = G4Transform3D(*rot, G4ThreeVector(0,0,-GlasInRad+RefConeDZ*2));
-    G4VSolid* RefConeBasic_solid2 = new G4IntersectionSolid("RefConeType2", RefConeBasic_solid22, single_Gel_solid1, transformers);
-    
-    
-    
-    
-    
-    //TubeHolder booleans substraction	
-    //	rot = new G4RotationMatrix();
-    //	transformers = G4Transform3D(*rot, G4ThreeVector(0,0,singlePMT_z));
-    //	G4SubtractionSolid* single_TubeHolder_solid2 = new G4SubtractionSolid("single TubeHolder2 solid", single_Foam_solid, RefConeNest_solid, transformers);
-    
-    
-    
-    transformers = G4Transform3D(G4RotationMatrix(), G4ThreeVector(0,0,CylHigh+0.5*mm));
-    G4SubtractionSolid* single_TubeHolder_solid3 = new G4SubtractionSolid("single TubeHolder3 solid",single_Foam_solid, single_Gel_solid1, transformers);
-    
-    
-    //	transformers = G4Transform3D(G4RotationMatrix(), G4ThreeVector(0,0,(GlasInRad-GelPMT-PMToffset+RefConeDZ)));
-    //	G4SubtractionSolid* single_TubeHolder_solid4 = new G4SubtractionSolid("single TubeHolder4 solid",single_TubeHolder_solid3, RefConeBasic_solid2, transformers);
-    
-    
-    transformers = G4Transform3D(G4RotationMatrix(), G4ThreeVector(0,0,(singlePMT_z)));
-    G4SubtractionSolid* single_TubeHolder_solid = new G4SubtractionSolid("single TubeHolder solid",single_TubeHolder_solid3, PMT_12199_tube_solid, transformers);
-    
-    //Gel booleans substraction
-    
-    //	transformers = G4Transform3D(G4RotationMatrix(), G4ThreeVector(0,0,(-CylHigh+GlasInRad-GelPMT-PMToffset+RefConeDZ)));
-    //	G4SubtractionSolid* single_Gel_solid3 = new G4SubtractionSolid("Gel substraction 1",single_Gel_solid1, RefConeBasic_solid2, transformers);
-    
-    //	transformers = G4Transform3D(G4RotationMatrix(), G4ThreeVector(0,0,(singlePMT_z-CylHigh)));
-    //	G4SubtractionSolid* single_Gel_solid4 = new G4SubtractionSolid("Gel substraction 2",single_Gel_solid1, PMT80_tube_solid, transformers);
-    
-    //	transformers = G4Transform3D(G4RotationMatrix(), G4ThreeVector(0,0,(singlePMT_z-CylHigh)));
-    //	G4SubtractionSolid* single_Gel_solid = new G4SubtractionSolid("Gel substraction 3",single_Gel_solid4, RefConeNest_solid, transformers);
-    
-    
-    
-    
-    
-    
-    G4LogicalVolume* RefConeType1_logical = new G4LogicalVolume(RefConeType1_solid, Mat_Reflector, "RefConeType1 logical");
-    G4LogicalVolume* RefConeType2_logical = new G4LogicalVolume(RefConeBasic_solid2, Mat_Absorber, "RefConeType2 logical"); 
-    G4LogicalVolume* single_Gel_logical = new G4LogicalVolume (single_Gel_solid2, Mat_LabAir, "single_Gelcorpus logical");
-    G4LogicalVolume* single_TubeHolder_logical = new G4LogicalVolume (single_TubeHolder_solid,  Mat_LabAir, "single TubeHolder logical");
-    
-    // 		PMT_physical[0] = new G4PVPlacement (0, G4ThreeVector(0,0,singlePMT_z), PMT_12199_tube_logical, "PMT_0_physical", single_Gel_logical, false, 0);
-    PMT_physical[0] = new G4PVPlacement (0, G4ThreeVector(0,0,singlePMT_z), PMT_12199_tube_logical, "PMT_0_physical", single_Gel_logical, true, 0);
-    //RefCone_physical[0] = new G4PVPlacement (0, G4ThreeVector(0,0,singlePMT_z + RefConeDZ), RefConeType1_logical, "RefCone_0_physical", single_Gel_logical, true, 0);
-    G4VPhysicalVolume* RefCone2_physical = new G4PVPlacement (0, G4ThreeVector(0,0,GlasInRad-RefConeDZ*2+CylHigh), RefConeType2_logical, "RefCone_2_physical", single_Gel_logical, true, 0);
-    
-    TubeHolder_physical = new G4PVPlacement (0, G4ThreeVector(0,0,0), single_TubeHolder_logical, "TubeHolder physical", single_Gel_logical, true, 0);
-    Gel_physical = new G4PVPlacement (0, G4ThreeVector(0,0,0), single_Gel_logical, "Gelcorpus physical", single_Glass_logical, true, 0);
+
     Glass_physical = new G4PVPlacement (0, G4ThreeVector(0,0,0), single_Glass_logical, "Glass_phys", World_logical, true, 0);
-    G4LogicalSkinSurface* RefConeSurface = new G4LogicalSkinSurface("RefCone_skin", RefConeType1_logical, RefCone_optical);
-    
+
     // ------------------- visualisation attributes -------------------------------------------------------------------------------
     
     single_Glass_logical->SetVisAttributes(Glass_vis);
-    single_Gel_logical->SetVisAttributes(World_vis);
-    RefConeType2_logical->SetVisAttributes(Absorber_vis);
-    single_TubeHolder_logical->SetVisAttributes(World_vis);
+
     //		single_Air_logical->SetVisAttributes(World_vis);
   }
   
   
-  if (OM_type == "PMTwithSample") {
+  if (OM_type == "PMTwithSampleN") {
     G4double singlePMT_z = CylHigh + GlasInRad - GelPMT - PMToffset;
-    
+
     G4Ellipsoid* single_GlassSphereTop_solid = new G4Ellipsoid("single_GlassSphereTop solid", GlasOutRad, GlasOutRad, GlasOutRad, -5*mm, GlasOutRad+5*mm);
     G4Tubs* single_GlassCylinder_solid = new G4Tubs("single_GlassCylinder solid", 0, GlasOutRad, CylHigh, 0, 2*pi);
     transformers = G4Transform3D(G4RotationMatrix(), G4ThreeVector(0,0,CylHigh ));
     G4UnionSolid* single_Glass_solid = new G4UnionSolid("single_glass_body", single_GlassCylinder_solid, single_GlassSphereTop_solid, transformers);
     G4LogicalVolume* single_Glass_logical = new G4LogicalVolume (single_Glass_solid, Mat_LabAir, "single_Glasscorpus logical");
-    
+
     G4Ellipsoid* single_Gel_solid1 = new G4Ellipsoid("GelSphereTop solid", GlasInRad, GlasInRad, GlasInRad, 120*mm, GlasInRad+5*mm);
-    
+
     G4Ellipsoid* single_GelSphereTop_solid2 = new G4Ellipsoid("GelSphereTop solid", GlasInRad, GlasInRad, GlasInRad, -5*mm, GlasInRad+5*mm);
     GelSphereBottom_solid = new G4Ellipsoid("GelSphereBottom solid", GlasInRad, GlasInRad, GlasInRad, -(GlasInRad+5*mm), 5*mm);
     G4Tubs* single_GelCylinder_solid2 = new G4Tubs("single_GelCylinder solid", 0, GlasOutRad - GlasThick-0.01*mm, CylHigh , 0, 2*pi);
     transformers = G4Transform3D(G4RotationMatrix(), G4ThreeVector(0,0,CylHigh ));
     G4UnionSolid* single_Gel_solid2 = new G4UnionSolid("single_gel_body", single_GelCylinder_solid2, single_GelSphereTop_solid2, transformers);
-    
+
     
     
     
@@ -2113,7 +3607,7 @@ G4VPhysicalVolume* mdomDetectorConstruction::Construct() {
     G4Tubs* single_FoamCylinder_solid = new G4Tubs("single FoamCylinder solid", 0, GlasOutRad - GlasThick, CylHigh , 0, 2*pi);
     transformers = G4Transform3D(G4RotationMatrix(), G4ThreeVector(0,0,(CylHigh )));
     G4UnionSolid* single_Foam_solid = new G4UnionSolid("single Foam solid", single_FoamCylinder_solid, FoamSphereTop_solid, transformers);
-    
+
     RefConeBasic_solid = new G4Cons("RefConeBasic", 
 				    RefCone_IdealInRad, 
 				    RefCone_IdealInRad + RefCone_SheetThickness*std::sqrt(2.), 
@@ -2123,7 +3617,7 @@ G4VPhysicalVolume* mdomDetectorConstruction::Construct() {
     rot = new G4RotationMatrix();
     transformers = G4Transform3D(*rot, G4ThreeVector(0,0,-(GlasInRad-GelPMT-PMToffset+RefConeDZ)));
     RefConeType1_solid = new G4IntersectionSolid("RefConeType1", RefConeBasic_solid, FoamSphereTop_solid,transformers);
-    
+
     G4VSolid* RefConeBasic_solid22 = new G4Cons("RefConeBasic2", 
 						0.5*51.9*mm, 
 						0.5*51.9*mm+RefCone_SheetThickness*std::sqrt(2.), 
@@ -2132,7 +3626,7 @@ G4VPhysicalVolume* mdomDetectorConstruction::Construct() {
 						RefConeDZ*2.28, 0, 2*pi);
     transformers = G4Transform3D(*rot, G4ThreeVector(0,0,-GlasInRad+RefConeDZ*2));
     G4VSolid* RefConeBasic_solid2 = new G4IntersectionSolid("RefConeType2", RefConeBasic_solid22, single_Gel_solid1, transformers);
-    
+
     
     
     
@@ -2140,12 +3634,12 @@ G4VPhysicalVolume* mdomDetectorConstruction::Construct() {
     G4SubtractionSolid* single_TubeHolder_solid3 = new G4SubtractionSolid("single TubeHolder3 solid",single_Foam_solid, single_Gel_solid1, transformers);
     
     
-    
+
     
     transformers = G4Transform3D(G4RotationMatrix(), G4ThreeVector(0,0,(singlePMT_z)));
     G4SubtractionSolid* single_TubeHolder_solid = new G4SubtractionSolid("single TubeHolder solid",single_TubeHolder_solid3, PMT_12199_tube_solid, transformers);
     
-    
+
     
     
     G4LogicalVolume* RefConeType1_logical = new G4LogicalVolume(RefConeType1_solid, Mat_Reflector, "RefConeType1 logical");
@@ -2165,12 +3659,18 @@ G4VPhysicalVolume* mdomDetectorConstruction::Construct() {
     G4Box* holder2 = new G4Box("Holder 2", 8*cm/2., 16*mm/2., 16*mm/2.);
     G4LogicalVolume* holder1_logical = new G4LogicalVolume(holder1, Mat_Absorber, "Holder1 logical");
     G4LogicalVolume* holder2_logical = new G4LogicalVolume(holder2, Mat_Absorber, "Holder2 logical");
+
     
-    
-    G4double zdist = 0.968/2.*cm;
-    G4double distToPMT = 3.6*cm-8*mm;
+    //G4double zdist = 0.968/2.*cm; //Vitrovex
+   // G4double lado = 1.5044*cm;//Vitrovex
+    G4double lado =0.5*1.9*cm;
+    G4double zdist = 1.14/2.*cm;
+    G4double distToPMT = gdistanceToSource*cm-8*mm;
     G4double PMTheight = (48.)*0.5*mm;
-    G4Box* mySample = new G4Box("Glass_phys", 1.5044*cm,1.5044*cm, zdist);
+    
+    
+    //G4Box* mySample = new G4Box("Glass_phys", 1.5044*cm,1.5044*cm, zdist); //Vitrovex sample
+    G4Box* mySample = new G4Box("Glass_phys", lado,lado, zdist); //Vitrovex sample
     G4LogicalVolume* mySampleLog = new G4LogicalVolume (mySample, Mat_Vessel_Glass, "single_Glasscorpus logical");
     
     
@@ -2181,18 +3681,166 @@ G4VPhysicalVolume* mdomDetectorConstruction::Construct() {
     //G4VPhysicalVolume* RefCone2_physical = new G4PVPlacement (0, G4ThreeVector(0,0,RefConeDZ+0*CylHigh), RefConeType2_logical, "RefCone_2_physical", myWorldLog, true, 0);
     PMT_physical[0] = new G4PVPlacement (0, G4ThreeVector(0,0,0), PMT_12199_tube_logical, "PMT_0_physical", myWorldLog, true, 0);
     
-    Glass_physical = new G4PVPlacement (0, G4ThreeVector(0,0,distToPMT+8*mm-zdist+PMTheight), mySampleLog, "Glass_phys", myWorldLog, true, 0);
+//Glass_physical = new G4PVPlacement (0, G4ThreeVector(0,0,distToPMT+8*mm-zdist+PMTheight), mySampleLog, "Glass_phys", myWorldLog, true, 0);
     G4PVPlacement* quelle_physical = new G4PVPlacement (0, G4ThreeVector(0,0,distToPMT+8*mm+0.5*mm+1*mm+PMTheight), quelle_logical, "Quelle_phys", myWorldLog, true, 0);
     G4PVPlacement* ring_physical = new G4PVPlacement (0, G4ThreeVector(0,0,distToPMT+8*mm+0.5*mm+PMTheight), ring_logical, "ring_phys", myWorldLog, true, 0);
+
     
-    G4cout << distToPMT+8*mm+0.5*mm+1*mm+PMTheight << G4endl;
-    
-    G4PVPlacement* holder1_physical = new G4PVPlacement (0, G4ThreeVector(0,-1.5044*cm-8*mm,distToPMT+PMTheight), holder1_logical, "holder1_phys", myWorldLog, true, 0);
-    G4PVPlacement* holder2_physical = new G4PVPlacement (0, G4ThreeVector(0,1.5044*cm+8*mm,distToPMT+PMTheight), holder2_logical, "holder2_phys", myWorldLog, true, 0);
+    //G4PVPlacement* holder1_physical = new G4PVPlacement (0, G4ThreeVector(0,-lado-8*mm,distToPMT+PMTheight), holder1_logical, "holder1_phys", myWorldLog, true, 0);
+    //G4PVPlacement* holder2_physical = new G4PVPlacement (0, G4ThreeVector(0,lado+8*mm,distToPMT+PMTheight), holder2_logical, "holder2_phys", myWorldLog, true, 0);
     
     
     // ------------------- visualisation attributes -------------------------------------------------------------------------------
     
+    G4UImanager* UI = G4UImanager::GetUIpointer();     
+    UI->ApplyCommand("/gps/particle alpha");
+    UI->ApplyCommand("/gps/energy 5.478 MeV");
+
+    UI->ApplyCommand("/gps/pos/type Plane");
+    UI->ApplyCommand("/gps/pos/shape Circle");
+    std::ostringstream osstringx;
+    osstringx << distToPMT+8*mm+0.5*mm+1*mm+PMTheight-0.51*mm;
+    G4String halfx = osstringx.str();
+    UI->ApplyCommand("/gps/pos/centre 0 0 "+halfx+" mm");
+    UI->ApplyCommand("/gps/pos/radius 9.62 mm");
+    UI->ApplyCommand("/gps/ang/type iso");
+
+    mySampleLog->SetVisAttributes(Glass_vis);
+    myWorldLog->SetVisAttributes(World_vis);
+    single_Gel_logical->SetVisAttributes(World_vis);
+    holder1_logical->SetVisAttributes(Absorber_vis);
+    holder2_logical->SetVisAttributes(Absorber_vis);
+    single_TubeHolder_logical->SetVisAttributes(World_vis);
+    //		single_Air_logical->SetVisAttributes(World_vis);
+  }
+  
+  if (OM_type == "PMTwithSample") {
+    G4double singlePMT_z = CylHigh + GlasInRad - GelPMT - PMToffset;
+
+    G4Ellipsoid* single_GlassSphereTop_solid = new G4Ellipsoid("single_GlassSphereTop solid", GlasOutRad, GlasOutRad, GlasOutRad, -5*mm, GlasOutRad+5*mm);
+    G4Tubs* single_GlassCylinder_solid = new G4Tubs("single_GlassCylinder solid", 0, GlasOutRad, CylHigh, 0, 2*pi);
+    transformers = G4Transform3D(G4RotationMatrix(), G4ThreeVector(0,0,CylHigh ));
+    G4UnionSolid* single_Glass_solid = new G4UnionSolid("single_glass_body", single_GlassCylinder_solid, single_GlassSphereTop_solid, transformers);
+    G4LogicalVolume* single_Glass_logical = new G4LogicalVolume (single_Glass_solid, Mat_LabAir, "single_Glasscorpus logical");
+
+    G4Ellipsoid* single_Gel_solid1 = new G4Ellipsoid("GelSphereTop solid", GlasInRad, GlasInRad, GlasInRad, 120*mm, GlasInRad+5*mm);
+
+    G4Ellipsoid* single_GelSphereTop_solid2 = new G4Ellipsoid("GelSphereTop solid", GlasInRad, GlasInRad, GlasInRad, -5*mm, GlasInRad+5*mm);
+    GelSphereBottom_solid = new G4Ellipsoid("GelSphereBottom solid", GlasInRad, GlasInRad, GlasInRad, -(GlasInRad+5*mm), 5*mm);
+    G4Tubs* single_GelCylinder_solid2 = new G4Tubs("single_GelCylinder solid", 0, GlasOutRad - GlasThick-0.01*mm, CylHigh , 0, 2*pi);
+    transformers = G4Transform3D(G4RotationMatrix(), G4ThreeVector(0,0,CylHigh ));
+    G4UnionSolid* single_Gel_solid2 = new G4UnionSolid("single_gel_body", single_GelCylinder_solid2, single_GelSphereTop_solid2, transformers);
+
+    
+    
+    
+    
+    G4double FoamRad = GlasOutRad - GlasThick - GelThick;
+    G4Ellipsoid* FoamSphereTop_solid  = new G4Ellipsoid("FoamSphereTop solid", GlasInRad, GlasInRad, GlasInRad, -5*mm, GlasInRad+5*mm);
+    G4Tubs* single_FoamCylinder_solid = new G4Tubs("single FoamCylinder solid", 0, GlasOutRad - GlasThick, CylHigh , 0, 2*pi);
+    transformers = G4Transform3D(G4RotationMatrix(), G4ThreeVector(0,0,(CylHigh )));
+    G4UnionSolid* single_Foam_solid = new G4UnionSolid("single Foam solid", single_FoamCylinder_solid, FoamSphereTop_solid, transformers);
+
+    RefConeBasic_solid = new G4Cons("RefConeBasic", 
+				    RefCone_IdealInRad, 
+				    RefCone_IdealInRad + RefCone_SheetThickness*std::sqrt(2.), 
+				    RefCone_IdealInRad + 2*RefConeDZ, 
+				    RefCone_IdealInRad + RefCone_SheetThickness*std::sqrt(2.) + 2*RefConeDZ, 
+				    RefConeDZ, 0, 2*pi);
+    rot = new G4RotationMatrix();
+    transformers = G4Transform3D(*rot, G4ThreeVector(0,0,-(GlasInRad-GelPMT-PMToffset+RefConeDZ)));
+    RefConeType1_solid = new G4IntersectionSolid("RefConeType1", RefConeBasic_solid, FoamSphereTop_solid,transformers);
+
+    G4VSolid* RefConeBasic_solid22 = new G4Cons("RefConeBasic2", 
+						0.5*51.9*mm, 
+						0.5*51.9*mm+RefCone_SheetThickness*std::sqrt(2.), 
+						RefCone_IdealInRad + 1.7*RefConeDZ+1*RefCone_SheetThickness*std::sqrt(2.), 
+						RefCone_IdealInRad + 2*RefCone_SheetThickness*std::sqrt(2.) + 1.7*RefConeDZ, 
+						RefConeDZ*2.28, 0, 2*pi);
+    transformers = G4Transform3D(*rot, G4ThreeVector(0,0,-GlasInRad+RefConeDZ*2));
+    G4VSolid* RefConeBasic_solid2 = new G4IntersectionSolid("RefConeType2", RefConeBasic_solid22, single_Gel_solid1, transformers);
+
+    
+    
+    
+    transformers = G4Transform3D(G4RotationMatrix(), G4ThreeVector(0,0,CylHigh+0.5*mm));
+    G4SubtractionSolid* single_TubeHolder_solid3 = new G4SubtractionSolid("single TubeHolder3 solid",single_Foam_solid, single_Gel_solid1, transformers);
+    
+    
+
+    
+    transformers = G4Transform3D(G4RotationMatrix(), G4ThreeVector(0,0,(singlePMT_z)));
+    G4SubtractionSolid* single_TubeHolder_solid = new G4SubtractionSolid("single TubeHolder solid",single_TubeHolder_solid3, PMT_12199_tube_solid, transformers);
+    
+
+    
+    
+    G4LogicalVolume* RefConeType1_logical = new G4LogicalVolume(RefConeType1_solid, Mat_Reflector, "RefConeType1 logical");
+    G4LogicalVolume* RefConeType2_logical = new G4LogicalVolume(RefConeBasic_solid2, Mat_Absorber, "RefConeType2 logical"); 
+    G4LogicalVolume* single_Gel_logical = new G4LogicalVolume (single_Gel_solid2, Mat_LabAir, "single_Gelcorpus logical");
+    G4LogicalVolume* single_TubeHolder_logical = new G4LogicalVolume (single_TubeHolder_solid,  Mat_LabAir, "single TubeHolder logical");
+    
+    G4Tubs* quelle_solid = new G4Tubs("Quelle solid", 0, 25*mm/2., 0.5*mm, 0, 2*pi);
+    G4LogicalVolume* quelle_logical = new G4LogicalVolume(quelle_solid, MatDatBase->FindOrBuildMaterial("G4_Fe"), "Quelle logical");
+    
+    
+    G4Tubs* ring_solid = new G4Tubs("Ring solid", 22*mm/2., 26*mm/2., 0.5*mm, 0, 2*pi);
+    G4LogicalVolume* ring_logical = new G4LogicalVolume(ring_solid, MatDatBase->FindOrBuildMaterial("G4_Fe"), "Ring logical");
+    
+    G4Tubs* ring_solid2 = new G4Tubs("Ring solid", 22*mm/2., 26*mm/2., 10*mm, 0, 2*pi);
+    G4LogicalVolume* ring_logical2 = new G4LogicalVolume(ring_solid2, MatDatBase->FindOrBuildMaterial("G4_Fe"), "Ring logical");
+    
+    G4Box* holder1 = new G4Box("Holder 1", 8*cm/2., 16*mm/2., 16*mm/2.);
+    G4Box* holder2 = new G4Box("Holder 2", 8*cm/2., 16*mm/2., 16*mm/2.);
+    G4LogicalVolume* holder1_logical = new G4LogicalVolume(holder1, Mat_Absorber, "Holder1 logical");
+    G4LogicalVolume* holder2_logical = new G4LogicalVolume(holder2, Mat_Absorber, "Holder2 logical");
+
+    
+    G4double zdist = 0.9/2.*cm; //Vitrovex
+    G4double lado = 1.5044*cm;//Vitrovex
+   // G4double lado =0.5*1.9*cm;
+    //G4double zdist = 4/2.*mm;
+    G4double distToPMT = gdistanceToSource*cm-8*mm;
+    G4double PMTheight = (48.)*0.5*mm;
+    
+    
+    G4Box* mySample = new G4Box("Glass_phys", lado,lado, zdist); //Vitrovex sample
+    //G4Tubs* mySample = new G4Tubs("Glass_phys", 0,12*mm, zdist, 0*deg, 360*deg); //Vitrovex sample
+    G4LogicalVolume* mySampleLog = new G4LogicalVolume (mySample, Mat_Vessel_Glass, "single_Glasscorpus logical");
+    
+    
+    G4Orb* myWorld = new G4Orb("myAirWorldsolid",gworldsize*m);
+    
+    G4LogicalVolume* myWorldLog = new G4LogicalVolume (myWorld, Mat_LabAir, "myairworld");
+    G4PVPlacement* myworldphy = new G4PVPlacement (0, G4ThreeVector(0,0,0), myWorldLog, "myworld", World_logical, true, 0);
+    
+    //G4VPhysicalVolume* RefCone2_physical = new G4PVPlacement (0, G4ThreeVector(0,0,RefConeDZ+0*CylHigh), RefConeType2_logical, "RefCone_2_physical", myWorldLog, true, 0);
+    PMT_physical[0] = new G4PVPlacement (0, G4ThreeVector(0,0,0), PMT_12199_tube_logical, "PMT_0_physical", myWorldLog, true, 0);
+    
+   Glass_physical = new G4PVPlacement (0, G4ThreeVector(0,0,distToPMT+8*mm+0.5*mm+PMTheight-zdist), mySampleLog, "Glass_phys", myWorldLog, true, 0);
+    G4PVPlacement* quelle_physical = new G4PVPlacement (0, G4ThreeVector(0,0,distToPMT+8*mm+0.5*mm+0.6*mm+PMTheight), quelle_logical, "Quelle_phys", myWorldLog, true, 0);
+    G4PVPlacement* ring_physical = new G4PVPlacement (0, G4ThreeVector(0,0,distToPMT+8*mm+0.5*mm+PMTheight), ring_logical, "ring_phys", myWorldLog, true, 0);
+    //G4PVPlacement* ring_physical2 = new G4PVPlacement (0, G4ThreeVector(0,0,distToPMT+8*mm+10*mm+PMTheight), ring_logical2, "ring_phys", myWorldLog, true, 0);
+    
+    G4PVPlacement* holder1_physical = new G4PVPlacement (0, G4ThreeVector(0,-lado-8*mm,distToPMT+PMTheight), holder1_logical, "holder1_phys", myWorldLog, true, 0);
+    G4PVPlacement* holder2_physical = new G4PVPlacement (0, G4ThreeVector(0,lado+8*mm,distToPMT+PMTheight), holder2_logical, "holder2_phys", myWorldLog, true, 0);
+    
+    
+    // ------------------- visualisation attributes -------------------------------------------------------------------------------
+    
+    G4UImanager* UI = G4UImanager::GetUIpointer();     
+    UI->ApplyCommand("/gps/particle alpha");
+    UI->ApplyCommand("/gps/energy 5.478 MeV");
+
+    UI->ApplyCommand("/gps/pos/type Plane");
+    UI->ApplyCommand("/gps/pos/shape Circle");
+    std::ostringstream osstringx;
+    osstringx << distToPMT+8*mm-0.01*mm+0.6*mm+PMTheight;
+    G4String halfx = osstringx.str();
+    UI->ApplyCommand("/gps/pos/centre 0 0 "+halfx+" mm");
+    UI->ApplyCommand("/gps/pos/radius 9.62 mm");
+    UI->ApplyCommand("/gps/ang/type iso");
+
     mySampleLog->SetVisAttributes(Glass_vis);
     myWorldLog->SetVisAttributes(World_vis);
     single_Gel_logical->SetVisAttributes(World_vis);
@@ -2203,7 +3851,7 @@ G4VPhysicalVolume* mdomDetectorConstruction::Construct() {
   }
   
   
-  
+
   
   
   

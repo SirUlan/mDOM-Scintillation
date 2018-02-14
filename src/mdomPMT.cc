@@ -43,14 +43,14 @@ mdomPMT::~mdomPMT(){
 
 void mdomPMT::loadThePMTInfo(){
   
-  deadTime=  0*ns;//1.0637e-06*s;
+  deadTime= 1.063701e-6*s;
   OsciThreshold = 7; // in mV
 
   
   if (gDOM == 1){
     QEfile = "../QEFiles/DOM.cfg";
     G4cout << "Time Response and QE for Hamamatsu R7081-02 (DOM)" << G4endl;
-    TransitTime = 62*ns;
+    TransitTime = 0*62*ns;
     TTS = 3.4;
     detectionProbability = 0.0;                               // Probability that the photon will not be registered.
   }
@@ -59,7 +59,7 @@ void mdomPMT::loadThePMTInfo(){
     QEfile = "../QEFiles/Hamamatsu12199-02.cfg";
     G4cout << "Time Response and QE for Hamamatsu 12199" << G4endl;
     TransitTime = 0.0*43*ns;
-    TTS =  0.96;
+    TTS =  1.66;
     
     detectionProbability = 1.0;                               // Probability that the photon will not be registered.
   }
@@ -86,6 +86,7 @@ void mdomPMT::loadThePMTInfo(){
     for (unsigned int u = 0; u <QEwavelenght.size(); u++) {
       QEwavelenght[u] = QEwavelenght.at(u)*nm;
       QEprobability[u] = QEprobability.at(u)/100.;
+
     }
     for (unsigned int u = 0; u <PEtime.size(); u++) {
       PEtime[u] = PEtime.at(u)*ns;
@@ -207,26 +208,45 @@ void mdomPMT::MotherFinder(std::vector<MdomAnalysisManager::photonHit>& HitVecto
 // The function HitKiller will erase all hits that arrived to the PMT in the pulse-pileup-time given by the variable deadTime. 
 // It also erase a certain percentage (given by the G4double "detectionProbability") of the individual hits (hits that do not have a "temporal neighbour") using the function triggerAcceptanceKiller.
 void mdomPMT::HitKiller(std::vector<MdomAnalysisManager::photonHit>& allHits)
-{  gAnalysisManager.NrAlone=0;
+{ G4double deadTimeSD = (deadTime)+ 81.6*sqrt(-2.*log(G4UniformRand()))*cos(2*3.14159265358979323846*(G4UniformRand()))*ns;
   
-  for (int i = 0; i < (int) (allHits.size()-1); i++) {
-    for (int j = i+1; j < (int) allHits.size(); j++){
-      //if ((allHits.at(i).stats_PMT_hit == allHits.at(j).stats_PMT_hit) && (allHits.at(i).hitMotherName == allHits.at(j).hitMotherName) && ((allHits.at(j).stats_hit_time-(allHits.at(i).stats_hit_time))<deadTime)){	
-      if ((allHits.at(j).stats_hit_time-(allHits.at(i).stats_hit_time))<deadTime){
+  //deadTimeSD = 0*ns;
+  gAnalysisManager.NrAlone=0;
+  G4int Size = allHits.size();
+  
+  /*
+   * Status Index:
+   * -3 = Went through Waveform test, but it was not inside another pulse
+   * -2 = Inside long Dead time
+   * -1 = Killed by triggerAcceptanceKiller
+   *  0 = Possibly inside another Pulse
+   *  1 = Default alive
+   *  2 = Reusisitated by Waveform
+  */
+  for (int i = 0; i < (int) (Size-1); i++) {
+    if (allHits.at(i).realHit == 1){
+    for (int j = i+1; j < (int) Size; j++){
+      if ((allHits.at(i).stats_PMT_hit == allHits.at(j).stats_PMT_hit) && (allHits.at(i).hitMotherName == allHits.at(j).hitMotherName) && ((allHits.at(j).stats_hit_time-(allHits.at(i).stats_hit_time))<deadTime)){	
+      //if (((allHits.at(j).stats_hit_time-(allHits.at(i).stats_hit_time))<(deadTimeSD)  && (allHits.at(i).hitMotherName == allHits.at(j).hitMotherName) )){
+       //if (((allHits.at(j).stats_hit_time-(allHits.at(i).stats_hit_time)))<(deadTimeSD)){
+	allHits.at(j).realHit=-2;
+      }
+      if ((allHits.at(i).stats_PMT_hit == allHits.at(j).stats_PMT_hit) && (allHits.at(i).hitMotherName == allHits.at(j).hitMotherName) && ((allHits.at(j).stats_hit_time-(allHits.at(i).stats_hit_time))<30*ns)){	
 	allHits.at(j).realHit=0;
       }
     }
+    }
   }
   
-  for (int i = 0; i < (int) (allHits.size()-1); i++) {
+  for (int i = 0; i < (int) (Size-1); i++) {
     G4int AccumulatedPhotons = 1;
     if ((allHits.at(i).realHit == 1)&&(allHits.at(i+1).realHit == 0)){
       
-      for (int j = i+1; j < (int) allHits.size(); j++){
+      for (int j = i+1; j < (int) Size; j++){
 	
 	if (allHits.at(j).realHit == 0){
 	  AccumulatedPhotons++;
-	  if (j==allHits.size()-1){
+	  if (j==Size-1){
 	    allHits.at(i).Amplitude = AccumulatedPhotons;
 	  }
 	}
@@ -251,17 +271,26 @@ void mdomPMT::HitKiller(std::vector<MdomAnalysisManager::photonHit>& allHits)
   }
   
   
-  if (allHits.size()>1){
-    if ((allHits.at(allHits.size()-1).realHit == 1) && (triggerAcceptanceKiller())) {
-      allHits.at(allHits.size()-1).Amplitude = 1;
+  if (Size>1){
+    if ((allHits.at(Size-1).realHit == 1) && (triggerAcceptanceKiller())) {
+      allHits.at(Size-1).Amplitude = 1;
     }
-    else if (allHits.at(allHits.size()-1).realHit == 1){
-      allHits.at(allHits.size()-1).Amplitude = 0;
-      allHits.at(allHits.size()-1).realHit = -1;
+    else if (allHits.at(Size-1).realHit == 1){
+      allHits.at(Size-1).Amplitude = 0;
+      allHits.at(Size-1).realHit = -1;
     }
     else {
-      allHits.at(allHits.size()-1).Amplitude = 0;
+      allHits.at(Size-1).Amplitude = 0;
     }
+  }
+  else if (Size==1){
+        if ((triggerAcceptanceKiller())){
+	allHits.at(0).Amplitude = 1;
+      }
+      else{
+	allHits.at(0).Amplitude = 0;
+	allHits.at(0).realHit = -1;
+      }
   }
 }
 
@@ -269,7 +298,7 @@ void mdomPMT::HitKiller(std::vector<MdomAnalysisManager::photonHit>& allHits)
 // This function adds up the hits,  separating them by their creationProcess.
 void mdomPMT::HitsProcessCounter(G4int& CerenkovCounter, G4int& ScintCounter, std::vector<G4int>& photonIds, std::vector<G4String>& creationProcess , std::vector<MdomAnalysisManager::photonHit>& allHits )
 { for (int i = 0; i < (int) allHits.size(); i++) {
-  if(allHits.at(i).realHit ==1 || allHits.at(i).realHit ==2){
+  if(allHits.at(i).realHit ==1 || allHits.at(i).realHit ==2 || allHits.at(i).realHit ==-1){
     G4int myindex = find(photonIds.begin(), photonIds.end(),allHits.at(i).hitPhotonID)- photonIds.begin(); 
     if (creationProcess.at(myindex) =="c"){
       CerenkovCounter++;}
@@ -328,6 +357,7 @@ void mdomPMT::WaveAmplitudeHitKiller( std::vector<MdomAnalysisManager::photonHit
 	G4bool UnderThreshold = true; // The Waveform start at 0, so the signal is under the threshold
 	G4bool firstTime = true; // First hit is always real
 	
+	G4int lastTruePulseIndex = i;
 	for ( int k = 0; k < (int) AmplitudeArray.size(); k++){ //Go through the Waveform     
 	  
 	  if (AmplitudeArray.at(k) < OsciThreshold && UnderThreshold == false ){ //The signal is lower than the threshold level, and it is not the beginning of the waveform
@@ -343,13 +373,29 @@ void mdomPMT::WaveAmplitudeHitKiller( std::vector<MdomAnalysisManager::photonHit
 	    G4int myindex = lower_bound(allHits.begin(), allHits.end(), dummy, compareTime)- allHits.begin(); // Get the index of the first hit that we have after the signal was over the threshold
 	    G4int myindex2 = lower_bound(HitTimes.begin(), HitTimes.end(), doubledummy, compareTimeDouble)- HitTimes.begin(); 
 	    
-	    allHits.at(myindex).realHit = 2; // This is a real hit now!
-	    allHits.at(myindex).Amplitude = OriginalAmplitude - myindex2+1;
+	    allHits.at(myindex).realHit = -3; // This is a real hit now!
+	    allHits.at(myindex).Amplitude = OriginalAmplitude - myindex2;
 	    
 
 	    
 	    if (!thishappenedonce){ 
 	      allHits.at(i).Amplitude = myindex2;
+	      
+	      if ((allHits.at(i).Amplitude == 1) ){
+		if ((triggerAcceptanceKiller())){
+		  allHits.at(i).Amplitude = 1;
+		}
+		else{
+		  allHits.at(i).Amplitude = 0;
+		  allHits.at(i).realHit = -1;
+		}
+	      }
+	      
+	      lastTruePulseIndex = myindex;
+	    }
+	    else {
+	      allHits.at(lastTruePulseIndex).Amplitude = myindex2;
+	      lastTruePulseIndex = myindex;
 	    }
 	    
 	    
@@ -404,25 +450,25 @@ bool mdomPMT::triggerAcceptanceKiller()
 
 // This function runs all the functions above. 
 void mdomPMT::Analysis() {
-  
-  
+
   gAnalysisManager.totalC=0;
   gAnalysisManager.totalS=0;	
   gAnalysisManager.totalRC=0;
   gAnalysisManager.totalRS=0;	
-  
+
   addTTS(gAnalysisManager.atPhotocathode);
-  
+
   sort(gAnalysisManager.atPhotocathode.begin(), gAnalysisManager.atPhotocathode.end(), sortByTime);
-  
+
   eraseFirstTime(gAnalysisManager.atPhotocathode);
-  
+
   MotherFinder(gAnalysisManager.atPhotocathode, gAnalysisManager.allParticles);
-  
+
   HitsProcessCounter(gAnalysisManager.totalC, gAnalysisManager.totalS, gAnalysisManager.photonIds, gAnalysisManager.creationProcess , gAnalysisManager.atPhotocathode);
-  
+
   HitKiller(gAnalysisManager.atPhotocathode);
-  //WaveAmplitudeHitKiller(gAnalysisManager.atPhotocathode);
+
+  WaveAmplitudeHitKiller(gAnalysisManager.atPhotocathode);
 
   
   HitsProcessCounter(gAnalysisManager.totalRC, gAnalysisManager.totalRS, gAnalysisManager.photonIds, gAnalysisManager.creationProcess , gAnalysisManager.atPhotocathode);

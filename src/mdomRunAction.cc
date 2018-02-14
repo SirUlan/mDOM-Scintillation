@@ -27,9 +27,9 @@ void mdomRunAction::BeginOfRunAction(const G4Run*)
   
   if (gHittype == "onlyHits") {
     G4String name3= ghitsfilename;
-    G4String name2= "Waves";
+    //G4String name2= "Waves";
     gAnalysisManager.datafileTest.open(name3.c_str(), std::ios::out|std::ios::app);
-    gAnalysisManager.datafileMother.open(name2.c_str(), std::ios::out|std::ios::app);
+    //gAnalysisManager.datafileMother.open(name2.c_str(), std::ios::out|std::ios::app);
   }
   
   if (gHittype == "detailed") {
@@ -46,6 +46,8 @@ void mdomRunAction::BeginOfRunAction(const G4Run*)
 
 void mdomRunAction::EndOfRunAction(const G4Run*)
 {
+
+  
   
   // 	Close output data file
   if (gHittype == "detailed") {
@@ -56,7 +58,7 @@ void mdomRunAction::EndOfRunAction(const G4Run*)
   }
   if (gHittype == "onlyHits") {
     gAnalysisManager.datafileTest.close();
-     gAnalysisManager.datafileMother.close();
+     //gAnalysisManager.datafileMother.close();
     }
   gAnalysisManager.Reset();
   

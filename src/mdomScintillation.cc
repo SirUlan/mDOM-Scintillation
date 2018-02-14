@@ -92,11 +92,13 @@
         /////////////////
         // Constructors
         /////////////////
+extern G4double gElectronFactor;
+
 
 mdomScintillation::mdomScintillation(const G4String& processName,
                                        G4ProcessType type)
                   : G4VRestDiscreteProcess(processName, type)
-{
+{       G4cout << gElectronFactor << G4endl;
         SetProcessSubType(fScintillation);
 
         fTrackSecondariesFirst = false;
@@ -316,7 +318,16 @@ mdomScintillation::PostStepDoIt(const G4Track& aTrack, const G4Step& aStep)
                                       GetConstProperty("SCINTILLATIONYIELD");
 
            // Units: [# scintillation photons / MeV]
+	G4ParticleDefinition *pDef = aParticle->GetDefinition();		      
+	if (pDef==G4Electron::ElectronDefinition() || pDef==G4Gamma::GammaDefinition()){
+
+	  ScintillationYield = ScintillationYield*gElectronFactor;
            ScintillationYield *= YieldFactor;
+	   
+	}
+	else{
+	  ScintillationYield *= YieldFactor;
+	}
         }
 
         G4double ResolutionScale    = aMaterialPropertiesTable->
@@ -396,7 +407,7 @@ mdomScintillation::PostStepDoIt(const G4Track& aTrack, const G4Step& aStep)
 
             if (scnt == 1 && nscnt == 3) {
               
-                 G4double myfactor = FirstAmplitude*FirstTime/(FirstAmplitude*FirstTime+SecondAmplitude*SecondTime+ThirdAmplitude*ThirdTime);
+                 G4double myfactor = FirstAmplitude/(FirstAmplitude+SecondAmplitude+ThirdAmplitude); //FirstAmplitude*FirstTime/(FirstAmplitude*FirstTime+SecondAmplitude*SecondTime+ThirdAmplitude*ThirdTime);
                  Num = G4int (myfactor*NumPhotons);
                  //G4cout << myfactor << " " << Num << " f"<< G4endl;
                  ScintillationTime   =  FirstTime;
@@ -404,7 +415,7 @@ mdomScintillation::PostStepDoIt(const G4Track& aTrack, const G4Step& aStep)
 	    }
 	      
             else if (scnt == 2 && nscnt == 3){
-	       G4double myfactor = SecondAmplitude*SecondTime/(FirstAmplitude*FirstTime+SecondAmplitude*SecondTime+ThirdAmplitude*ThirdTime);
+	       G4double myfactor = SecondAmplitude/(FirstAmplitude+SecondAmplitude+ThirdAmplitude);//SecondAmplitude*SecondTime/(FirstAmplitude*FirstTime+SecondAmplitude*SecondTime+ThirdAmplitude*ThirdTime);
 	       
                Num = G4int (myfactor*NumPhotons);
 	       //G4cout << myfactor << " " << Num << " s"<< G4endl;
@@ -419,7 +430,7 @@ mdomScintillation::PostStepDoIt(const G4Track& aTrack, const G4Step& aStep)
 	       G4int Numf = G4int (temp1*NumPhotons) + G4int (temp2*NumPhotons);
 	       Num = NumPhotons - Numf;*/
 	       
-	       G4double myfactor = ThirdAmplitude*ThirdTime/(FirstAmplitude*FirstTime+SecondAmplitude*SecondTime+ThirdAmplitude*ThirdTime);
+	       G4double myfactor = ThirdAmplitude/(FirstAmplitude+SecondAmplitude+ThirdAmplitude);//ThirdAmplitude*ThirdTime/(FirstAmplitude*FirstTime+SecondAmplitude*SecondTime+ThirdAmplitude*ThirdTime);
 	       Num = G4int (myfactor*NumPhotons);
 	       //G4cout << Num << " t"<< G4endl;
                ScintillationTime   =   ThirdTime;

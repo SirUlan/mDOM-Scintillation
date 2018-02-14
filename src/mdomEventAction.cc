@@ -48,6 +48,7 @@ void mdomEventAction::EndOfEventAction(const G4Event* evt)
   //   end of the run and not at the end of each event.
   //   I left it like it is,  for making the things easier if we want to change 
   //   the writing-time again,  but right now they are just 1-element-vectors.
+
   gAnalysisManager.NrScintillationVec.push_back(gAnalysisManager.NrScintillation); 
   gAnalysisManager.NrCerenkovVec.push_back(gAnalysisManager.NrCerenkov);
   

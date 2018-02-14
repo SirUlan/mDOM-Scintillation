@@ -57,7 +57,9 @@ G4double	gscintYield;
 G4double	gscintTimeConst;
 G4double	gscintSpectrum;
 G4double	gTemperature;
-
+G4double	gdistanceToSource;
+G4double	gSourceRadius;
+G4double	gElectronFactor;
 G4int		gDecayConditional;
 G4int		gQE;
 
@@ -234,6 +236,9 @@ int main(int argc,char *argv[])
 	struct arg_dbl	*scintTimeConst	= arg_dbl0("tT", "scintTimeConst", "<n>", "\t\tScintillation's Time constant of the glass (only Vitrovex) in ns. Default 300000.");
 	struct arg_dbl	*scintSpectrum	= arg_dbl0("sS", "scintSpectrum", "<n>", "\t\tMove the scintillation's spectrum by # nm. Default 0 nm.");
 	struct arg_dbl	*Temperature 	= arg_dbl0("bB", "Temperature", "<n>", "\t\t Temperature for material property selection");
+	struct arg_dbl	*distanceToProbe	= arg_dbl0("dD", "distanceToProbe", "<n>", "\t\t Distance from PMT to source");
+	struct arg_dbl	*SourceRadius	= arg_dbl0("rR", "SourceRadius", "<n>", "\t\t SourceRadius");
+	struct arg_dbl	*ElectronFactor	= arg_dbl0("fF", "ElectronFactor", "<n>", "\t\t ElectronFactor");
 	struct arg_lit	*help		= arg_lit0(NULL,"help","\t\tprint this help and exit");
 	
 	struct arg_int *QE = arg_int0("qQ","QE","<n>","\t\tQuantum efficiency ON = 1 or off =0. Killing events. Default 0.");
@@ -260,6 +265,9 @@ int main(int argc,char *argv[])
 						scintTimeConst,
 						scintSpectrum,
 						Temperature,
+						distanceToProbe,
+						SourceRadius,
+						ElectronFactor,
 						help, 
 						QE,						
 						end};
@@ -294,9 +302,12 @@ int main(int argc,char *argv[])
 	outputfile->filename[0] = "K40";
 	hittype->ival[0] = 0;	// store only hits as default
 	scintYield->dval[0] = 20.0;
-	scintTimeConst->dval[0] = 300000.0;
+	scintTimeConst->dval[0] = 100.0;
 	scintSpectrum->dval[0] = 0.0;
 	Temperature->dval[0] = -35;
+	distanceToProbe->dval[0] = 7.3;
+	SourceRadius->dval[0] = 0.0;
+	ElectronFactor->dval[0] = 9.5;
 	QE->ival[0]=1;
 	
 	/* Parse the command line as defined by argtable[] */
@@ -351,6 +362,9 @@ int main(int argc,char *argv[])
 	gscintTimeConst = scintTimeConst->dval[0];
 	gscintSpectrum = scintSpectrum->dval[0];
 	gTemperature = Temperature->dval[0];
+	gdistanceToSource = distanceToProbe->dval[0];
+	gSourceRadius = SourceRadius->dval[0];
+	gElectronFactor = ElectronFactor->dval[0];
 	gQE = QE->ival[0];
 	
 	if (hittype->ival[0]==0){

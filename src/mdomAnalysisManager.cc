@@ -24,18 +24,18 @@ void MdomAnalysisManager::ResetEvent()
 // -------------------------------------------WRITE FUNCTIONS----------------------------------------------------
 void MdomAnalysisManager::WriteDetailPhotons()
 {           for (int i = 0; i < (int) atPhotocathode.size(); i++) {
-if (true) {
+if (atPhotocathode.at(i).realHit == 1 || atPhotocathode.at(i).realHit == 2) {
 
   //datafile << "# event#     Name Mother Nucleus    hit time/ns  flight time/ns  track length/m  energy/eV PMT#  event distance/m  photon position[m]: x,y,z  direction: x,y,z r[m] ParentId"<<G4endl;		 
-  datafile << atPhotocathode.at(i).stats_event_id << "\t";
+  //datafile << atPhotocathode.at(i).stats_event_id << "\t";
   //datafile << stats_mothername.at(i) << "\t";
   datafile << atPhotocathode.at(i).stats_hit_time << "\t";
   //datafile << stats_photon_flight_time.at(i) << "\t";
   //datafile << stats_photon_track_length.at(i) << "\t";
   //datafile << stats_photon_energy.at(i) << "\t";
   //datafile << photonAmplitude.at(i) << "\t";
-    datafile << atPhotocathode.at(i).Amplitude << "\t";
-    datafile << atPhotocathode.at(i).stats_photon_energy << "\t";
+    datafile << atPhotocathode.at(i).hitMotherName << "\t";
+    //datafile << atPhotocathode.at(i).stats_PMT_hit<< "\t";
   //datafile << stats_event_distance.at(i) << "\t";
   //datafile << stats_photon_Xposition.at(i)/m << "\t";
   //datafile << stats_photon_Yposition.at(i)/m << "\t";
@@ -53,10 +53,11 @@ if (true) {
    //   break;
   //  }
  // }
-  datafile << G4endl;
-  }
-}
 
+  }
+  
+}
+datafile << G4endl;
 }
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......ooOO0OOooo........oooOO0OOooo......
 void MdomAnalysisManager::WriteMotherDecay()
@@ -80,7 +81,7 @@ void MdomAnalysisManager::WriteAccept()
   int	pmthits[25] = {0};
   int sum = 0;
   int alone = 0;
-  //datafile << "# test header" << G4endl;
+
   
   
   // repacking hits:
@@ -95,11 +96,11 @@ void MdomAnalysisManager::WriteAccept()
   }
   // wrinting collective hits
   for (int j = 0; j < 24; j++) {
-    //datafileTest << "\t" << pmthits[j];
+   // datafileTest << "\t" << pmthits[j];
     sum += pmthits[j];
     pmthits[j] = 0;
   }
-  datafileTest << "\t" << sum <<"\t"  << alone <<"\t" << totalRC << "\t" << totalRS  ;
+  datafileTest << "\t" << sum  << "\t" << alone <<"\t" << totalRC << "\t" << totalRS  ;
   datafileTest << G4endl;
 }
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......ooOO0OOooo........oooOO0OOooo......
