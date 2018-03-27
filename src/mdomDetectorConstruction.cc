@@ -2000,10 +2000,11 @@ G4VPhysicalVolume* mdomDetectorConstruction::Construct() {
   proptable_VitrovexGlass->AddProperty("SECONDCOMPONENT",VV_WL,VV_I,138);
   proptable_VitrovexGlass->AddProperty("THIRDCOMPONENT",VV_WL,VV_I,138);
   
-  
+
   proptable_VitrovexGlass->AddConstProperty("FIRSTTIME",FirstTime_VV[tempIndexVitro]);
   proptable_VitrovexGlass->AddConstProperty("SECONDTIME",SecondTime_VV[tempIndexVitro]);
   proptable_VitrovexGlass->AddConstProperty("THIRDTIME",ThirdTime_VV[tempIndexVitro]);
+
 
   proptable_VitrovexGlass->AddConstProperty("RESOLUTIONSCALE", 1.0);
 

@@ -30,7 +30,7 @@ bool compareTimeDouble(const G4double & S_0 , const G4double & S_1) {
 }
 
 mdomPMT::mdomPMT(){
-  DecayMode = false;
+  DecayMode = true;
   
 }
 
@@ -44,7 +44,7 @@ mdomPMT::~mdomPMT(){
 void mdomPMT::loadThePMTInfo(){
   
   deadTime= 1.063701e-6*s;
-  OsciThreshold = 7; // in mV
+  OsciThreshold = 0.7; // in mV
 
   
   if (gDOM == 1){
@@ -77,7 +77,7 @@ void mdomPMT::loadThePMTInfo(){
   
   
   if (gQE==1) {
-    PEfile = "../QEFiles/1PE.txt"; 
+    PEfile = "../QEFiles/1PE-new.txt"; 
     QEwavelenght= readColumnDouble(QEfile, 1);
     QEprobability= readColumnDouble(QEfile, 2);  
     PEtime= readColumnDouble(PEfile, 1);
@@ -210,7 +210,7 @@ void mdomPMT::MotherFinder(std::vector<MdomAnalysisManager::photonHit>& HitVecto
 void mdomPMT::HitKiller(std::vector<MdomAnalysisManager::photonHit>& allHits)
 { G4double deadTimeSD = (deadTime)+ 81.6*sqrt(-2.*log(G4UniformRand()))*cos(2*3.14159265358979323846*(G4UniformRand()))*ns;
   
-  //deadTimeSD = 0*ns;
+  deadTimeSD = 0*ns;
   gAnalysisManager.NrAlone=0;
   G4int Size = allHits.size();
   
@@ -221,17 +221,17 @@ void mdomPMT::HitKiller(std::vector<MdomAnalysisManager::photonHit>& allHits)
    * -1 = Killed by triggerAcceptanceKiller
    *  0 = Possibly inside another Pulse
    *  1 = Default alive
-   *  2 = Reusisitated by Waveform
   */
+  
   for (int i = 0; i < (int) (Size-1); i++) {
-    if (allHits.at(i).realHit == 1){
+    if (allHits.at(i).realHit != -2){
     for (int j = i+1; j < (int) Size; j++){
-      if ((allHits.at(i).stats_PMT_hit == allHits.at(j).stats_PMT_hit) && (allHits.at(i).hitMotherName == allHits.at(j).hitMotherName) && ((allHits.at(j).stats_hit_time-(allHits.at(i).stats_hit_time))<deadTime)){	
+      if ((allHits.at(i).stats_PMT_hit == allHits.at(j).stats_PMT_hit) && (allHits.at(i).hitMotherName == allHits.at(j).hitMotherName) && ((allHits.at(j).stats_hit_time-(allHits.at(i).stats_hit_time))<deadTimeSD)){	
       //if (((allHits.at(j).stats_hit_time-(allHits.at(i).stats_hit_time))<(deadTimeSD)  && (allHits.at(i).hitMotherName == allHits.at(j).hitMotherName) )){
        //if (((allHits.at(j).stats_hit_time-(allHits.at(i).stats_hit_time)))<(deadTimeSD)){
 	allHits.at(j).realHit=-2;
       }
-      if ((allHits.at(i).stats_PMT_hit == allHits.at(j).stats_PMT_hit) && (allHits.at(i).hitMotherName == allHits.at(j).hitMotherName) && ((allHits.at(j).stats_hit_time-(allHits.at(i).stats_hit_time))<30*ns)){	
+      if ((allHits.at(i).stats_PMT_hit == allHits.at(j).stats_PMT_hit) && (allHits.at(i).hitMotherName == allHits.at(j).hitMotherName) && ((allHits.at(j).stats_hit_time-(allHits.at(i).stats_hit_time))<20*ns)){	
 	allHits.at(j).realHit=0;
       }
     }
@@ -240,37 +240,34 @@ void mdomPMT::HitKiller(std::vector<MdomAnalysisManager::photonHit>& allHits)
   
   for (int i = 0; i < (int) (Size-1); i++) {
     G4int AccumulatedPhotons = 1;
-    if ((allHits.at(i).realHit == 1)&&(allHits.at(i+1).realHit == 0)){
+    if ((allHits.at(i).realHit == 1) ){
       
       for (int j = i+1; j < (int) Size; j++){
 	
-	if (allHits.at(j).realHit == 0){
+	if ((allHits.at(j).realHit == 0) &&(allHits.at(i).stats_PMT_hit == allHits.at(j).stats_PMT_hit) && (allHits.at(i).hitMotherName == allHits.at(j).hitMotherName) ){
 	  AccumulatedPhotons++;
 	  if (j==Size-1){
 	    allHits.at(i).Amplitude = AccumulatedPhotons;
 	  }
 	}
-	else {
+	else if ((allHits.at(i).stats_PMT_hit == allHits.at(j).stats_PMT_hit) && (allHits.at(i).hitMotherName == allHits.at(j).hitMotherName)){
 	  
 	  allHits.at(i).Amplitude = AccumulatedPhotons;
 	  break;
 	}
-	
-	
       }
-    }
-    else if ((allHits.at(i).realHit == 1) ){
+      if (AccumulatedPhotons==1){
       if ((triggerAcceptanceKiller())){
 	allHits.at(i).Amplitude = 1;
       }
       else{
 	allHits.at(i).Amplitude = 0;
 	allHits.at(i).realHit = -1;
-      }
+      }}
     }
   }
   
-  
+
   if (Size>1){
     if ((allHits.at(Size-1).realHit == 1) && (triggerAcceptanceKiller())) {
       allHits.at(Size-1).Amplitude = 1;
@@ -314,32 +311,49 @@ void mdomPMT::HitsProcessCounter(G4int& CerenkovCounter, G4int& ScintCounter, st
 void mdomPMT::WaveAmplitudeHitKiller( std::vector<MdomAnalysisManager::photonHit>& allHits){ 
   HitKiller(allHits); //Evaluate if the hits are real, not detected because of the threshold acceptance or ot detected because of the ToT.
 
-  if (allHits.size()>1){ //gToT==1 //If you have more than one hit
+  if (allHits.size()>1){ //If you have more than one hit
     for ( int i = 0; i < (allHits.size()-1); i++) { //for every possible hit
       if (allHits.at(i).realHit == 1 && allHits.at(i).Amplitude > 1){// If the Hit is real and it has some photons inside the dead time (neighbour events)
+
 	
 	std::vector<G4double> WaveTime;
 	std::vector<G4double> HitTimes;
+	std::vector<G4int> Original_indexes;
 	std::vector<G4double> WaveAmp;
 	std::vector<G4double> AmplitudeArray;
 	G4int OriginalAmplitude = allHits.at(i).Amplitude;
 	G4bool thishappenedonce = false;
-	
-	
-	for (int j = i; j < allHits.at(i).Amplitude +i ; j++){ //for every neighbour
+
+	G4int dummy_counter=1;
+	Original_indexes.push_back(i);
+	HitTimes.push_back(allHits.at(i).stats_hit_time);
+	for (int item = 0; item < PEtime.size(); item++){
+	    WaveTime.push_back(PEtime.at(item)+allHits.at(i).stats_hit_time); //Make 1 PE peak in hit time
+	    WaveAmp.push_back(PEamp.at(item));
+	    
+	  }
+	for (int j = i+1; j < (allHits.size()) ; j++){ //for every neighbour
+	  if ((allHits.at(j).realHit == 0) &&(allHits.at(i).stats_PMT_hit == allHits.at(j).stats_PMT_hit) && (allHits.at(i).hitMotherName == allHits.at(j).hitMotherName)){
+	    dummy_counter += 1;
 	  HitTimes.push_back(allHits.at(j).stats_hit_time);
+	  Original_indexes.push_back(j);
 	  for (int item = 0; item < PEtime.size(); item++){
 	    WaveTime.push_back(PEtime.at(item)+allHits.at(j).stats_hit_time); //Make 1 PE peak in hit time
 	    WaveAmp.push_back(PEamp.at(item));
 	    
 	  }
+	    if (dummy_counter == OriginalAmplitude){
+	      break;}
+	    
+	  }
 	} 
+	
 	
 	G4double time_min =  *min_element(WaveTime.begin(),WaveTime.end()); // search for the smallest time value
 	G4double time_max = *max_element(WaveTime.begin(),WaveTime.end()); //searches for the largest time value
-	G4double spacing = 0.2; // The 1 PE data file has time values with 0.2 ns spacing...change it if you use another file! (Maybe improve the code, so it searches for the spacing at the beginning of the run)
+	G4double spacing = 0.01; // The 1 PE data file has time values with 0.01 ns spacing...change it if you use another file! (Maybe improve the code, so it searches for the spacing at the beginning of the run)
 	
-	for (int k = 0; k <= round((time_max-time_min)/0.2); k++){
+	for (int k = 0; k <= round((time_max-time_min)/spacing); k++){
 	  AmplitudeArray.push_back(0);                             // it makes a vector with the needed dimension
 	}
 	
@@ -352,12 +366,16 @@ void mdomPMT::WaveAmplitudeHitKiller( std::vector<MdomAnalysisManager::photonHit
 	}  
 	//::::::::::::::::::::::::::: Here you have already a Waveform, do wathever you want with it. You can make the time array with k*spacing*ns+time_min, where k is an index that goes from 0 to AmplitudeArray.size():::::::::::::::::::
 	//:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
-
+	//for (int k = 0; k < AmplitudeArray.size(); k++){
+	//  gAnalysisManager.datafileMother << k*spacing*ns+time_min << "\t" << AmplitudeArray.at(k) << G4endl;
+	//}
+	
 	G4bool UnderThreshold = true; // The Waveform start at 0, so the signal is under the threshold
 	G4bool firstTime = true; // First hit is always real
 	
 	G4int lastTruePulseIndex = i;
+	G4int lastTruePulseIndex_inWaveform = 1;
+	
 	for ( int k = 0; k < (int) AmplitudeArray.size(); k++){ //Go through the Waveform     
 	  
 	  if (AmplitudeArray.at(k) < OsciThreshold && UnderThreshold == false ){ //The signal is lower than the threshold level, and it is not the beginning of the waveform
@@ -370,32 +388,51 @@ void mdomPMT::WaveAmplitudeHitKiller( std::vector<MdomAnalysisManager::photonHit
 	    dummy.stats_hit_time = k*spacing*ns+time_min;
 	    doubledummy= k*spacing*ns+time_min;
 	    
-	    G4int myindex = lower_bound(allHits.begin(), allHits.end(), dummy, compareTime)- allHits.begin(); // Get the index of the first hit that we have after the signal was over the threshold
 	    G4int myindex2 = lower_bound(HitTimes.begin(), HitTimes.end(), doubledummy, compareTimeDouble)- HitTimes.begin(); 
+	    G4int myindex = Original_indexes.at(myindex2); // Get the index of the first hit that we have after the signal was over the threshold
+
+	    //G4cout << myindex << G4endl;
+	    //G4cout << '\t' << OriginalAmplitude << " " << myindex2 << G4endl;
+	    
+	    //G4cout << "Resusited -3: " << allHits.at(myindex).stats_hit_time << " " << OriginalAmplitude - myindex2<< G4endl;
+
 	    
 	    allHits.at(myindex).realHit = -3; // This is a real hit now!
 	    allHits.at(myindex).Amplitude = OriginalAmplitude - myindex2;
 	    
-
-	    
-	    if (!thishappenedonce){ 
-	      allHits.at(i).Amplitude = myindex2;
-	      
-	      if ((allHits.at(i).Amplitude == 1) ){
-		if ((triggerAcceptanceKiller())){
-		  allHits.at(i).Amplitude = 1;
+	    if (allHits.at(myindex).Amplitude == 1){
+	      if ((triggerAcceptanceKiller())){
+		  allHits.at(myindex).Amplitude = 1;
 		}
 		else{
-		  allHits.at(i).Amplitude = 0;
-		  allHits.at(i).realHit = -1;
+		  allHits.at(myindex).Amplitude = 0;
+		  allHits.at(myindex).realHit = -1;
 		}
-	      }
-	      
-	      lastTruePulseIndex = myindex;
 	    }
+	    
+	    if (false){ }
 	    else {
-	      allHits.at(lastTruePulseIndex).Amplitude = myindex2;
+	      
+	      //G4cout << "Erasing lastrue pulse: Time, old am, am windex2: " << allHits.at(lastTruePulseIndex).stats_hit_time << " " << allHits.at(lastTruePulseIndex).Amplitude << " " << myindex2-lastTruePulseIndex_inWaveform<< G4endl;
+	      if (lastTruePulseIndex == i){
+	      allHits.at(lastTruePulseIndex).Amplitude = myindex2-lastTruePulseIndex_inWaveform+1;}
+	      else {
+		allHits.at(lastTruePulseIndex).Amplitude = myindex2-lastTruePulseIndex_inWaveform;}
+	      
+	      //G4cout << "newamp wi " << allHits.at(lastTruePulseIndex).Amplitude << G4endl;
+	      
+	       if (allHits.at(lastTruePulseIndex).Amplitude == 1){
+	      if ((triggerAcceptanceKiller())){
+		  allHits.at(lastTruePulseIndex).Amplitude = 1;
+		}
+		else{
+		  allHits.at(lastTruePulseIndex).Amplitude = 0;
+		  allHits.at(lastTruePulseIndex).realHit = -1;
+		}
+	    }
+	      lastTruePulseIndex_inWaveform = myindex2;
 	      lastTruePulseIndex = myindex;
+	      
 	    }
 	    
 	    
@@ -407,25 +444,6 @@ void mdomPMT::WaveAmplitudeHitKiller( std::vector<MdomAnalysisManager::photonHit
 	    UnderThreshold = false;
 	  }
 	  
-	}
-	
-
-	for (int j = i+1; j < OriginalAmplitude +i-1 ; j++){ 	  
-	  if (allHits.at(j).realHit == 2){
-
-	    for (int k = j+1; k < OriginalAmplitude +i ; k++){
-
-	      if (allHits.at(k).realHit == 2){
-		allHits.at(j).Amplitude = allHits.at(j).Amplitude -allHits.at(k).Amplitude;
-		break;
-	      }
-	      
-	    }
-	  }
-	}
-
-	if (allHits.at(OriginalAmplitude +i-1).realHit == 2){	  
-	  allHits.at(OriginalAmplitude+i-1).Amplitude =1;
 	}
 
       }
