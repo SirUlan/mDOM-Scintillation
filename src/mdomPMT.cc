@@ -43,7 +43,7 @@ mdomPMT::~mdomPMT(){
 
 void mdomPMT::loadThePMTInfo(){
   
-  deadTime= 1.063701e-6*s;
+  deadTime= 2.45e-6*s;
   OsciThreshold = 0.7; // in mV
 
   
@@ -208,19 +208,19 @@ void mdomPMT::MotherFinder(std::vector<MdomAnalysisManager::photonHit>& HitVecto
 // The function HitKiller will erase all hits that arrived to the PMT in the pulse-pileup-time given by the variable deadTime. 
 // It also erase a certain percentage (given by the G4double "detectionProbability") of the individual hits (hits that do not have a "temporal neighbour") using the function triggerAcceptanceKiller.
 void mdomPMT::HitKiller(std::vector<MdomAnalysisManager::photonHit>& allHits)
-{ G4double deadTimeSD = (deadTime)+ 81.6*sqrt(-2.*log(G4UniformRand()))*cos(2*3.14159265358979323846*(G4UniformRand()))*ns;
+{ G4double deadTimeSD = (deadTime);//+ 81.6*sqrt(-2.*log(G4UniformRand()))*cos(2*3.14159265358979323846*(G4UniformRand()))*ns;
   
-  deadTimeSD = 0*ns;
+  //deadTimeSD = 0*ns;
   gAnalysisManager.NrAlone=0;
   G4int Size = allHits.size();
   
   /*
-   * Status Index:
-   * -3 = Went through Waveform test, but it was not inside another pulse
-   * -2 = Inside long Dead time
-   * -1 = Killed by triggerAcceptanceKiller
-   *  0 = Possibly inside another Pulse
-   *  1 = Default alive
+  * Status Index:
+  * -3 = Went through Waveform test, but it was not inside another pulse
+  * -2 = Inside long Dead time
+  * -1 = Killed by triggerAcceptanceKiller
+  *  0 = Possibly inside another Pulse
+  *  1 = Default alive
   */
   
   for (int i = 0; i < (int) (Size-1); i++) {
@@ -228,10 +228,10 @@ void mdomPMT::HitKiller(std::vector<MdomAnalysisManager::photonHit>& allHits)
     for (int j = i+1; j < (int) Size; j++){
       if ((allHits.at(i).stats_PMT_hit == allHits.at(j).stats_PMT_hit) && (allHits.at(i).hitMotherName == allHits.at(j).hitMotherName) && ((allHits.at(j).stats_hit_time-(allHits.at(i).stats_hit_time))<deadTimeSD)){	
       //if (((allHits.at(j).stats_hit_time-(allHits.at(i).stats_hit_time))<(deadTimeSD)  && (allHits.at(i).hitMotherName == allHits.at(j).hitMotherName) )){
-       //if (((allHits.at(j).stats_hit_time-(allHits.at(i).stats_hit_time)))<(deadTimeSD)){
+      //if (((allHits.at(j).stats_hit_time-(allHits.at(i).stats_hit_time)))<(deadTimeSD)){
 	allHits.at(j).realHit=-2;
       }
-      if ((allHits.at(i).stats_PMT_hit == allHits.at(j).stats_PMT_hit) && (allHits.at(i).hitMotherName == allHits.at(j).hitMotherName) && ((allHits.at(j).stats_hit_time-(allHits.at(i).stats_hit_time))<20*ns)){	
+      if ((allHits.at(i).stats_PMT_hit == allHits.at(j).stats_PMT_hit) && (allHits.at(i).hitMotherName == allHits.at(j).hitMotherName) && ((allHits.at(j).stats_hit_time-(allHits.at(i).stats_hit_time))<0*ns)){	
 	allHits.at(j).realHit=0;
       }
     }
@@ -281,7 +281,7 @@ void mdomPMT::HitKiller(std::vector<MdomAnalysisManager::photonHit>& allHits)
     }
   }
   else if (Size==1){
-        if ((triggerAcceptanceKiller())){
+	if ((triggerAcceptanceKiller())){
 	allHits.at(0).Amplitude = 1;
       }
       else{
@@ -322,17 +322,17 @@ void mdomPMT::WaveAmplitudeHitKiller( std::vector<MdomAnalysisManager::photonHit
 	std::vector<G4double> WaveAmp;
 	std::vector<G4double> AmplitudeArray;
 	G4int OriginalAmplitude = allHits.at(i).Amplitude;
-	G4bool thishappenedonce = false;
-
+	
 	G4int dummy_counter=1;
 	Original_indexes.push_back(i);
 	HitTimes.push_back(allHits.at(i).stats_hit_time);
+	
 	for (int item = 0; item < PEtime.size(); item++){
 	    WaveTime.push_back(PEtime.at(item)+allHits.at(i).stats_hit_time); //Make 1 PE peak in hit time
-	    WaveAmp.push_back(PEamp.at(item));
-	    
+	    WaveAmp.push_back(PEamp.at(item)); 
 	  }
-	for (int j = i+1; j < (allHits.size()) ; j++){ //for every neighbour
+	  
+	for (int j = i; j < (allHits.size()) ; j++){ //for every neighbour
 	  if ((allHits.at(j).realHit == 0) &&(allHits.at(i).stats_PMT_hit == allHits.at(j).stats_PMT_hit) && (allHits.at(i).hitMotherName == allHits.at(j).hitMotherName)){
 	    dummy_counter += 1;
 	  HitTimes.push_back(allHits.at(j).stats_hit_time);
@@ -421,7 +421,7 @@ void mdomPMT::WaveAmplitudeHitKiller( std::vector<MdomAnalysisManager::photonHit
 	      
 	      //G4cout << "newamp wi " << allHits.at(lastTruePulseIndex).Amplitude << G4endl;
 	      
-	       if (allHits.at(lastTruePulseIndex).Amplitude == 1){
+	      if (allHits.at(lastTruePulseIndex).Amplitude == 1){
 	      if ((triggerAcceptanceKiller())){
 		  allHits.at(lastTruePulseIndex).Amplitude = 1;
 		}
@@ -434,9 +434,6 @@ void mdomPMT::WaveAmplitudeHitKiller( std::vector<MdomAnalysisManager::photonHit
 	      lastTruePulseIndex = myindex;
 	      
 	    }
-	    
-	    
-	    thishappenedonce = true;
 	    UnderThreshold = false; 
 	  }
 	  if (AmplitudeArray.at(k) > OsciThreshold && UnderThreshold == true && firstTime == true){ // Change the conditional after the first part of the signal is over the threshold
@@ -486,7 +483,7 @@ void mdomPMT::Analysis() {
 
   HitKiller(gAnalysisManager.atPhotocathode);
 
-  WaveAmplitudeHitKiller(gAnalysisManager.atPhotocathode);
+  //WaveAmplitudeHitKiller(gAnalysisManager.atPhotocathode);
 
   
   HitsProcessCounter(gAnalysisManager.totalRC, gAnalysisManager.totalRS, gAnalysisManager.photonIds, gAnalysisManager.creationProcess , gAnalysisManager.atPhotocathode);
