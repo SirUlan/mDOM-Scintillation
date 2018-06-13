@@ -63,7 +63,6 @@ G4double	gElectronFactor;
 G4int		gDecayConditional;
 G4int		gQE;
 
-
 // G4String	greffilename;
 
 G4bool		gKillAll;

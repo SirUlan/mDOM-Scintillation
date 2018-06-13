@@ -54,6 +54,9 @@ extern G4double gTemperature;
 extern G4double gdistanceToSource;
 extern G4double gSourceRadius;
 
+
+
+
 extern std::vector<double> readColumnDouble (G4String fn, int col);
 extern std::vector<G4String> explode (G4String s, char d);
 
@@ -2835,7 +2838,7 @@ G4VPhysicalVolume* mdomDetectorConstruction::Construct() {
   G4double startAngleOfTheTube = 0.*deg;
   G4double spanningAngleOfTheTube = 360.*deg;
   G4double gRadius = 3*m;
-  G4double gHeight = gworldsize*m;
+  G4double gHeight = gdistanceToSource*m+0.5*m;
   
  World_solid = new G4Tubs("tracker_tube",innerRadiusOfTheTube,gRadius,gHeight,startAngleOfTheTube,spanningAngleOfTheTube);
     
@@ -3675,7 +3678,7 @@ G4VPhysicalVolume* mdomDetectorConstruction::Construct() {
     RefConeSurface = new G4LogicalSkinSurface("RefCone_skin", RefCone_12199_logical, RefCone_optical);
     
     
-    G4VPhysicalVolume* Glass_physical_2 = new G4PVPlacement (flipOM, G4ThreeVector(0,0,-2*m), Glass_logical, "Glass_phys_2", World_logical, false, 0);
+    G4VPhysicalVolume* Glass_physical_2 = new G4PVPlacement (flipOM, G4ThreeVector(0,0,-gdistanceToSource*m), Glass_logical, "Glass_phys_2", World_logical, false, 0);
 
     
     
@@ -3693,7 +3696,7 @@ G4VPhysicalVolume* mdomDetectorConstruction::Construct() {
     RefConeType2_ETEL_logical->SetVisAttributes(Alu_vis);
     RefConeType3_ETEL_logical->SetVisAttributes(Alu_vis);
     RefCone_ETEL_logical->SetVisAttributes(PhotoCathode_vis);
-    RefCone_12199_logical->SetVisAttributes(PhotoCathode_vis);
+    RefCone_12199_logical->SetVisAttributes(PhotoCathode_vis); 
     
   } // closing mDOM area
   
