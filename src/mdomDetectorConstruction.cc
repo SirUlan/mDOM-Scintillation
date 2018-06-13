@@ -2831,8 +2831,15 @@ G4VPhysicalVolume* mdomDetectorConstruction::Construct() {
   ////////////////
   
   //	The "World": -----------------------------------------------------------------------------------------------------
+  G4double innerRadiusOfTheTube = 0.*cm;
+  G4double startAngleOfTheTube = 0.*deg;
+  G4double spanningAngleOfTheTube = 360.*deg;
+  G4double gRadius = 3*m;
+  G4double gHeight = gworldsize*m;
   
-  World_solid = new G4Orb("World",gworldsize*m);
+ World_solid = new G4Tubs("tracker_tube",innerRadiusOfTheTube,gRadius,gHeight,startAngleOfTheTube,spanningAngleOfTheTube);
+    
+//World_solid = new G4Orb("World",gworldsize*m);
   
   if (World_type == "air"){
     World_logical = new G4LogicalVolume(World_solid, Mat_LabAir, "World logical", 0, 0, 0);
@@ -3117,7 +3124,7 @@ G4VPhysicalVolume* mdomDetectorConstruction::Construct() {
   }
   
   
-  if (OM_type == "mDOM") {
+  if (OM_type == "mDOM1") {
     // Producing PMT & RefCone coordinates
     G4double PMT_theta[99], PMT_phi[99], PMT_x[99], PMT_y[99], PMT_z[99], RefCone_x[99], RefCone_y[99], RefCone_z[99]; 
     G4double PMT_rho;
@@ -3144,7 +3151,8 @@ G4VPhysicalVolume* mdomDetectorConstruction::Construct() {
       }
       if (i>=12 && i<=19){
 	PMT_theta[i]=108.0*deg;
-	PMT_phi[i]=(i-12)*45.0*deg;
+	//PMT_phi[i]=(i-12)*45.0*deg; //Verdreht
+	PMT_phi[i]=(22.5+(i-12)*45.0)*deg;
 	PMT_z_offset = - CylHigh + MPMTzoffset;
 	PMT_r += MPMTroffset;
 	RefCone_r += MPMTroffset;
@@ -3372,6 +3380,8 @@ G4VPhysicalVolume* mdomDetectorConstruction::Construct() {
       }
     }
     
+    
+        
     // ------------------- optical border surfaces --------------------------------------------------------------------------------
     G4LogicalSkinSurface* RefConeSurface = new G4LogicalSkinSurface("RefCone_skin", RefConeType1_logical, RefCone_optical);
     RefConeSurface = new G4LogicalSkinSurface("RefCone_skin", RefConeType2_logical, RefCone_optical);
@@ -3380,6 +3390,294 @@ G4VPhysicalVolume* mdomDetectorConstruction::Construct() {
     RefConeSurface = new G4LogicalSkinSurface("RefCone_skin", RefConeType3_ETEL_logical, RefCone_optical);
     RefConeSurface = new G4LogicalSkinSurface("RefCone_skin", RefCone_ETEL_logical, RefCone_optical);
     RefConeSurface = new G4LogicalSkinSurface("RefCone_skin", RefCone_12199_logical, RefCone_optical);
+    
+    // White Holder
+    if (Holder_color == "White") { G4LogicalSkinSurface* HolderSurface = new G4LogicalSkinSurface("Holder_skin", TubeHolder_logical, Holder_optical); }
+    
+    // ---------------- visualisation attributes --------------------------------------------------------------------------------
+    Glass_logical->SetVisAttributes(Glass_vis);
+    Gel_logical->SetVisAttributes(Gel_vis);
+    TubeHolder_logical->SetVisAttributes(Absorber_vis);
+    
+    RefConeType1_logical->SetVisAttributes(Alu_vis);
+    RefConeType2_logical->SetVisAttributes(Alu_vis);
+    RefConeType3_logical->SetVisAttributes(Alu_vis);
+    RefConeType2_ETEL_logical->SetVisAttributes(Alu_vis);
+    RefConeType3_ETEL_logical->SetVisAttributes(Alu_vis);
+    RefCone_ETEL_logical->SetVisAttributes(PhotoCathode_vis);
+    RefCone_12199_logical->SetVisAttributes(PhotoCathode_vis);
+    
+  } // closing mDOM area
+    
+    
+      if (OM_type == "mDOM") {
+    // Producing PMT & RefCone coordinates
+    G4double PMT_theta[99], PMT_phi[99], PMT_x[99], PMT_y[99], PMT_z[99], RefCone_x[99], RefCone_y[99], RefCone_z[99]; 
+    G4double PMT_rho;
+    G4double RefCone_rho;
+    G4double PMT_z_offset;
+    G4double PMT_r;
+    G4double RefCone_r;
+    
+    for (i = 0; i <= 23; i++) {
+      PMT_r = GlasInRad - GelPMT - PMToffset;		// radius for PMT positioning
+      RefCone_r = GlasInRad - GelPMT - PMToffset + RefConeDZ;	// radius for RefCone positioning
+      if (i>=0 && i<=3){
+	PMT_theta[i]=33.0*deg;
+	PMT_phi[i]=i*90.0*deg;
+	PMT_z_offset = CylHigh;
+      }
+      if (i>=4 && i<=11){
+	PMT_theta[i]=72.0*deg;
+	PMT_phi[i]=(22.5+(i-4)*45.0)*deg;
+	// 		PMT_phi[i]=(0+(i-4)*45.0)*deg;
+	PMT_z_offset = CylHigh - MPMTzoffset;
+	PMT_r += MPMTroffset;
+	RefCone_r += MPMTroffset;
+      }
+      if (i>=12 && i<=19){
+	PMT_theta[i]=108.0*deg;
+	//PMT_phi[i]=(i-12)*45.0*deg; //Verdreht
+	PMT_phi[i]=(22.5+(i-12)*45.0)*deg;
+	PMT_z_offset = - CylHigh + MPMTzoffset;
+	PMT_r += MPMTroffset;
+	RefCone_r += MPMTroffset;
+      }
+      if (i>=20 && i<=23){
+	PMT_theta[i]=147.0*deg;
+	PMT_phi[i]=(22.5+(i-20)*90.0)*deg;
+	// 		PMT_phi[i]=(0+(i-20)*90.0)*deg;
+	PMT_z_offset = - CylHigh;
+      }
+      
+      //	  G4cout << i << " " << PMT_theta[i] << " " << PMT_phi[i] << G4endl;
+      
+      PMT_rho = PMT_r * sin(PMT_theta[i]);
+      PMT_x[i] = PMT_rho * cos(PMT_phi[i]);
+      PMT_y[i] = PMT_rho * sin(PMT_phi[i]);
+      PMT_z[i] = PMT_r * cos(PMT_theta[i]) + PMT_z_offset;
+      
+      RefCone_rho = RefCone_r * sin(PMT_theta[i]);
+      RefCone_x[i] = RefCone_rho * cos(PMT_phi[i]);
+      RefCone_y[i] = RefCone_rho * sin(PMT_phi[i]);
+      RefCone_z[i] = RefCone_r * cos(PMT_theta[i]) + PMT_z_offset;
+      
+    }	  
+    
+    //Cutting the PMT nests from foam...
+    for (k = 0; k <=23; k++) {
+      rot = new G4RotationMatrix();
+      rot->rotateY(PMT_theta[k]);
+      rot->rotateZ(PMT_phi[k]);
+      transformers = G4Transform3D(*rot, G4ThreeVector(PMT_x[k],PMT_y[k],PMT_z[k]));
+      if (k==0){
+	TubeHolder_solid = new G4SubtractionSolid("TubeHolder solid", Foam_solid, RefConeNest_solid, transformers);
+      } 		
+      else { 
+	TubeHolder_solid = new G4SubtractionSolid("TubeHolder solid", TubeHolder_solid, RefConeNest_solid, transformers);
+      }
+    }
+    
+    // building reflective cones:
+    // old style:
+    // RefConeBasic_solid = new G4Cons("RefConeBasic", 
+    // RefCone_IdealInRad, 
+    // RefCone_IdealInRad + RefCone_SheetThickness*std::sqrt(2.), 
+    // RefCone_IdealInRad + 2*RefConeDZ, 
+    // RefCone_IdealInRad + RefCone_SheetThickness*std::sqrt(2.) + 2*RefConeDZ, 
+    // RefConeDZ, 0, 2*pi);
+    
+    RefConeBasic_solid = new G4Cons("RefConeBasic", RefCone_IdealInRad, RefCone_IdealInRad + RefCone_SheetThickness / cos(RefCone_angle), 
+				    RefCone_IdealInRad + 2*RefConeDZ*tan(RefCone_angle), RefCone_IdealInRad + RefCone_SheetThickness / cos(RefCone_angle) + 2*RefConeDZ*tan(RefCone_angle), RefConeDZ, 0, 2*pi);									
+    
+    // reflective cone type1 for spherical part (upper and lowermost rings):
+    // old
+    // rot = new G4RotationMatrix();
+    // transformers = G4Transform3D(*rot, G4ThreeVector(0,0,-(GlasInRad-GelPMT-PMToffset+RefConeDZ)));
+    // RefConeType1_solid = new G4IntersectionSolid("RefConeType1", RefConeBasic_solid, FoamSphereTop_solid, transformers);
+    // new
+    RefConeType1_solid = new G4IntersectionSolid("RefConeType1", RefConeBasic_solid, FoamSphereTop_solid, 0, G4ThreeVector(0,0,-(GlasInRad-GelPMT-PMToffset+RefConeDZ)));
+    
+    // reflective cone type 2 for upper central ring:	
+    G4double RefConeType2_r = GlasInRad - GelPMT - PMToffset + RefConeDZ + MPMTroffset;
+    G4double RefConeType2_rho = RefConeType2_r * sin(72*deg);
+    G4double RefConeType2_x = RefConeType2_rho * cos(0*deg);
+    G4double RefConeType2_y = RefConeType2_rho * sin(0*deg);
+    G4double RefConeType2_z = RefConeType2_r * cos(72*deg) + CylHigh - MPMTzoffset;
+    
+    rot = new G4RotationMatrix();
+    rot->rotateY(72*deg);
+    transformers = G4Transform3D(*rot, G4ThreeVector(RefConeType2_x, RefConeType2_y, RefConeType2_z));
+    
+    RefConeType2_solid = new G4IntersectionSolid("RefConeType2", Foam_solid, RefConeBasic_solid, transformers);
+    
+    // reflective cone type 3 for lower central ring:	
+    G4double RefConeType3_r = GlasInRad - GelPMT - PMToffset + RefConeDZ + MPMTroffset;
+    G4double RefConeType3_rho = RefConeType3_r * sin(108*deg);
+    G4double RefConeType3_x = RefConeType3_rho * cos(0*deg);
+    G4double RefConeType3_y = RefConeType3_rho * sin(0*deg);
+    G4double RefConeType3_z = RefConeType3_r * cos(108*deg) - CylHigh + MPMTzoffset;
+    
+    rot = new G4RotationMatrix();
+    rot->rotateY(108*deg);
+    transformers = G4Transform3D(*rot, G4ThreeVector(RefConeType3_x, RefConeType3_y, RefConeType3_z));
+    
+    RefConeType3_solid = new G4IntersectionSolid("RefConeType3", Foam_solid, RefConeBasic_solid, transformers);
+    
+    // etel cone needs additional cropping to prevent collisions:
+    // 	if (PMT_type == "etel"){
+    G4Cons* RefConeCutter_solid = new G4Cons("RefConeCutter", 
+					     0, RefCone_IdealInRad + RefCone_SheetThickness*std::sqrt(2.) + 2*mm, 
+					     0, RefCone_IdealInRad + RefCone_SheetThickness*std::sqrt(2.) + 2*RefConeDZ + 2*mm, 
+					     RefConeDZ, 0, 2*pi);
+    
+    // cropping type 2 cone:
+    G4double RefConeCut_r = GlasInRad - GelPMT - PMToffset + RefConeDZ + MPMTroffset;
+    G4double RefConeCut_rho = RefConeCut_r * sin(72*deg);
+    G4double RefConeCut_x = RefConeCut_rho * cos(45*deg);
+    G4double RefConeCut_y = RefConeCut_rho * sin(45*deg);
+    G4double RefConeCut_z = RefConeCut_r * cos(72*deg) + CylHigh - MPMTzoffset;
+    
+    rot = new G4RotationMatrix();
+    rot->rotateY(72*deg);
+    rot->rotateZ(45*deg);
+    transformers = G4Transform3D(*rot, G4ThreeVector(RefConeCut_x, RefConeCut_y, RefConeCut_z));
+    
+    G4SubtractionSolid* RefConeType2_ETEL_solid = new G4SubtractionSolid("RefConeType2 ETEL solid", 
+									 RefConeType2_solid,
+									 RefConeCutter_solid,
+									 transformers
+    );
+    
+    RefConeCut_x = RefConeCut_rho * cos(-45*deg);
+    RefConeCut_y = RefConeCut_rho * sin(-45*deg);
+    
+    rot = new G4RotationMatrix();
+    rot->rotateY(72*deg);
+    rot->rotateZ(-45*deg);
+    transformers = G4Transform3D(*rot, G4ThreeVector(RefConeCut_x, RefConeCut_y, RefConeCut_z));
+    
+    RefConeType2_ETEL_solid = new G4SubtractionSolid("RefConeType2 ETEL solid", RefConeType2_ETEL_solid, RefConeCutter_solid, transformers);
+    
+    // cropping type 3 cone:
+    RefConeCut_rho = RefConeCut_r * sin(108*deg);
+    RefConeCut_x = RefConeCut_rho * cos(45*deg);
+    RefConeCut_y = RefConeCut_rho * sin(45*deg);
+    RefConeCut_z = RefConeCut_r * cos(108*deg) - CylHigh + MPMTzoffset;
+    
+    rot = new G4RotationMatrix();
+    rot->rotateY(108*deg);
+    rot->rotateZ(45*deg);
+    transformers = G4Transform3D(*rot, G4ThreeVector(RefConeCut_x, RefConeCut_y, RefConeCut_z));
+    
+    G4SubtractionSolid* RefConeType3_ETEL_solid = new G4SubtractionSolid("RefConeType3 ETEL solid", 
+									 RefConeType3_solid,
+									 RefConeCutter_solid,
+									 transformers
+    );
+    
+    RefConeCut_x = RefConeCut_rho * cos(-45*deg);
+    RefConeCut_y = RefConeCut_rho * sin(-45*deg);
+    
+    rot = new G4RotationMatrix();
+    rot->rotateY(108*deg);
+    rot->rotateZ(-45*deg);
+    transformers = G4Transform3D(*rot, G4ThreeVector(RefConeCut_x, RefConeCut_y, RefConeCut_z));
+    
+    RefConeType3_ETEL_solid = new G4SubtractionSolid("RefConeType3 ETEL solid", RefConeType3_ETEL_solid, RefConeCutter_solid, transformers);
+    
+    G4LogicalVolume* RefConeType2_ETEL_logical = new G4LogicalVolume(RefConeType2_ETEL_solid, Mat_Reflector, "RefConeType2 ETEL logical");
+    G4LogicalVolume* RefConeType3_ETEL_logical = new G4LogicalVolume(RefConeType3_ETEL_solid, Mat_Reflector, "RefConeType3 ETEL logical");
+    // 	}
+    
+    
+    
+    
+    //  Placing da stuff ----------------------------------------------------------------------------------------------------------------------------------
+    rot = new G4RotationMatrix();
+    
+    G4RotationMatrix* flipOM = new G4RotationMatrix();
+    // 			flipOM->rotateY(180*deg); // for hunting the bug...
+    
+    Glass_logical = new G4LogicalVolume (Glass_solid, Mat_Vessel_Glass, "Glass_log");
+    Glass_physical = new G4PVPlacement (flipOM, G4ThreeVector(0,0,0), Glass_logical, "Glass_phys", World_logical, false, 0);
+    
+    Gel_logical = new G4LogicalVolume (Gel_solid, Mat_Gel, "Gelcorpus logical");
+    Gel_physical = new G4PVPlacement (0, G4ThreeVector(0,0,0), Gel_logical, "Gelcorpus physical", Glass_logical, false, 0);
+    
+    TubeHolder_logical = new G4LogicalVolume (TubeHolder_solid, Mat_Absorber, "TubeHolder logical");
+    TubeHolder_physical = new G4PVPlacement (0, G4ThreeVector(0,0,0), TubeHolder_logical, "TubeHolder physical", Gel_logical, false, 0);
+    
+    RefConeType1_logical = new G4LogicalVolume(RefConeType1_solid, Mat_Reflector, "RefConeType1 logical");    
+    RefConeType2_logical = new G4LogicalVolume(RefConeType2_solid, Mat_Reflector, "RefConeType2 logical");
+    RefConeType3_logical = new G4LogicalVolume(RefConeType3_solid, Mat_Reflector, "RefConeType3 logical");
+    
+    
+    // placing PMTs & RefCones (into gel)
+    std::stringstream converter;
+    for (k = 0; k <= 23; k++){
+      converter.str("");
+      converter << "PMT_" << k << "_physical";
+      rot = new G4RotationMatrix();
+      rot->rotateY(PMT_theta[k]);
+      rot->rotateZ(PMT_phi[k]);
+      transformers = G4Transform3D(*rot, G4ThreeVector(PMT_x[k],PMT_y[k],PMT_z[k]));
+      
+      // placing PMTs depending on type:
+      if (PMT_type == "12199s"){
+	PMT_physical[k] = new G4PVPlacement (transformers, PMT_12199_tube_logical, converter.str(), Gel_logical, false, 0);
+      }
+      if (PMT_type == "etel"){
+	PMT_physical[k] = new G4PVPlacement (transformers, PMT_ETEL_tube_logical, converter.str(), Gel_logical, false, 0);
+      }
+      if (PMT_type == "12199e"){
+	PMT_physical[k] = new G4PVPlacement (transformers, PMT80_tube_logical, converter.str(), Gel_logical, false, 0);
+      }
+      
+      // placing reflective cones:
+      // type 1 for all "polar" conees, type 2 for upper central, type 3 for lower central
+      converter.str("");
+      converter << "RefCone_" << k << "_physical";
+      transformers = G4Transform3D(*rot, G4ThreeVector(RefCone_x[k],RefCone_y[k],RefCone_z[k]));
+      if (k >= 4 && k <= 11) {
+	rot = new G4RotationMatrix();
+	rot->rotateZ(PMT_phi[k]);
+	transformers = G4Transform3D(*rot, G4ThreeVector(0,0,0));
+	if (PMT_type == "etel"){
+	  RefCone_physical[k] = new G4PVPlacement (transformers, RefConeType2_ETEL_logical, converter.str(), Gel_logical, false, 0);
+	}
+	else {
+	  RefCone_physical[k] = new G4PVPlacement (transformers, RefConeType2_logical, converter.str(), Gel_logical, false, 0);
+	}
+      }
+      else if (k >= 12 && k <= 19) {
+	rot = new G4RotationMatrix();
+	rot->rotateZ(PMT_phi[k]);
+	transformers = G4Transform3D(*rot, G4ThreeVector(0,0,0));
+	if (PMT_type == "etel"){
+	  RefCone_physical[k] = new G4PVPlacement (transformers, RefConeType3_ETEL_logical, converter.str(), Gel_logical, false, 0);
+	}
+	else {
+	  RefCone_physical[k] = new G4PVPlacement (transformers, RefConeType3_logical, converter.str(), Gel_logical, false, 0);
+	}
+      }
+      else {
+	RefCone_physical[k] = new G4PVPlacement (transformers, RefConeType1_logical, converter.str(), Gel_logical, false, 0);
+      }
+    }
+    // ------------------- optical border surfaces --------------------------------------------------------------------------------
+    G4LogicalSkinSurface* RefConeSurface = new G4LogicalSkinSurface("RefCone_skin", RefConeType1_logical, RefCone_optical);
+    RefConeSurface = new G4LogicalSkinSurface("RefCone_skin", RefConeType2_logical, RefCone_optical);
+    RefConeSurface = new G4LogicalSkinSurface("RefCone_skin", RefConeType3_logical, RefCone_optical);
+    RefConeSurface = new G4LogicalSkinSurface("RefCone_skin", RefConeType2_ETEL_logical, RefCone_optical);
+    RefConeSurface = new G4LogicalSkinSurface("RefCone_skin", RefConeType3_ETEL_logical, RefCone_optical);
+    RefConeSurface = new G4LogicalSkinSurface("RefCone_skin", RefCone_ETEL_logical, RefCone_optical);
+    RefConeSurface = new G4LogicalSkinSurface("RefCone_skin", RefCone_12199_logical, RefCone_optical);
+    
+    
+    G4VPhysicalVolume* Glass_physical_2 = new G4PVPlacement (flipOM, G4ThreeVector(0,0,-2*m), Glass_logical, "Glass_phys_2", World_logical, false, 0);
+
+    
     
     // White Holder
     if (Holder_color == "White") { G4LogicalSkinSurface* HolderSurface = new G4LogicalSkinSurface("Holder_skin", TubeHolder_logical, Holder_optical); }

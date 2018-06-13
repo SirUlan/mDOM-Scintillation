@@ -27,17 +27,17 @@ void MdomAnalysisManager::WriteDetailPhotons()
 if (true) {
 
   //datafile << "# event#     Name Mother Nucleus    hit time/ns  flight time/ns  track length/m  energy/eV PMT#  event distance/m  photon position[m]: x,y,z  direction: x,y,z r[m] ParentId"<<G4endl;		 
-  datafile << atPhotocathode.at(i).stats_event_id << "\t";
+  //datafile << atPhotocathode.at(i).stats_event_id << "\t";
   //datafile << stats_mothername.at(i) << "\t";
   datafile << atPhotocathode.at(i).stats_hit_time << "\t";
   //datafile << stats_photon_flight_time.at(i) << "\t";
   //datafile << stats_photon_track_length.at(i) << "\t";
   //datafile << stats_photon_energy.at(i) << "\t";
   //datafile << photonAmplitude.at(i) << "\t";
-    datafile << atPhotocathode.at(i).Amplitude << "\t";
-    datafile << atPhotocathode.at(i).realHit << "\t";
+    //datafile << atPhotocathode.at(i).Amplitude << "\t";
+    //datafile << atPhotocathode.at(i).realHit << "\t";
+  datafile << atPhotocathode.at(i).stats_PMT_hit<< "\t";
     datafile << atPhotocathode.at(i).hitMotherName << "\t" ;
-    datafile << atPhotocathode.at(i).stats_PMT_hit<< G4endl;
   //datafile << stats_event_distance.at(i) << "\t";
   //datafile << stats_photon_Xposition.at(i)/m << "\t";
   //datafile << stats_photon_Yposition.at(i)/m << "\t";

@@ -133,7 +133,7 @@ void mdomSteppingAction::UserSteppingAction(const G4Step* aStep)
     
     if ( aTrack->GetTrackStatus() != fStopAndKill ) {
 
-      if ( (aStep->GetPostStepPoint()->GetMaterial()->GetName() == "Photocathode")&&(aTrack->GetTrackStatus() != fStopAndKill ) ) {
+      if ( (aStep->GetPostStepPoint()->GetMaterial()->GetName() == "Photocathode")&&(aStep->GetPostStepPoint()->GetTouchableHandle()->GetVolume(3)->GetName() == "Glass_phys_2")&&(aTrack->GetTrackStatus() != fStopAndKill ) ) {
 
 	G4double h = 4.136E-15*eV*s;
 	G4double c = 2.99792458E17*nm/s;

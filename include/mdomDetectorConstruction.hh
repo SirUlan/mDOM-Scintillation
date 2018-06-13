@@ -34,7 +34,7 @@ class mdomDetectorConstruction : public G4VUserDetectorConstruction
 		G4double GetWaveLenght(float energy);
 		G4double Spice_Refraction(int u);
 
-		G4Orb*					World_solid;
+		G4Tubs*					World_solid;
 		G4LogicalVolume*		World_logical;
 		G4VPhysicalVolume*		World_physical;
 		

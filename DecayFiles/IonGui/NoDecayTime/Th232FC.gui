@@ -2,6 +2,7 @@
 /grdm/setRadioactiveDecayFile 81 208 ../DecayFiles/OriginalFiles/daughters/Th232/z81.a208
 /grdm/setRadioactiveDecayFile 83 212 ../DecayFiles/OriginalFiles/daughters/Th232/z83.a212
 /grdm/setRadioactiveDecayFile 82 212 ../DecayFiles/OriginalFiles/daughters/Th232/z82.a212
+/grdm/setRadioactiveDecayFile 82 206 ../DecayFiles/OriginalFiles/daughters/Th232/z82.a206
 /grdm/setRadioactiveDecayFile 84 216 ../DecayFiles/OriginalFiles/daughters/Th232/z84.a216
 /grdm/setRadioactiveDecayFile 86 220 ../DecayFiles/OriginalFiles/daughters/Th232/z86.a220
 /grdm/setRadioactiveDecayFile 88 224 ../DecayFiles/OriginalFiles/daughters/Th232/z88.a224

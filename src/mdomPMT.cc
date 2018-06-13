@@ -210,7 +210,7 @@ void mdomPMT::MotherFinder(std::vector<MdomAnalysisManager::photonHit>& HitVecto
 void mdomPMT::HitKiller(std::vector<MdomAnalysisManager::photonHit>& allHits)
 { G4double deadTimeSD = (deadTime);//+ 81.6*sqrt(-2.*log(G4UniformRand()))*cos(2*3.14159265358979323846*(G4UniformRand()))*ns;
   
-  //deadTimeSD = 0*ns;
+  deadTimeSD = 0*ns;
   gAnalysisManager.NrAlone=0;
   G4int Size = allHits.size();
   
