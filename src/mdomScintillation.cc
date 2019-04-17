@@ -74,9 +74,9 @@
 #include "G4SystemOfUnits.hh"
 #include "G4ParticleTypes.hh"
 #include "G4EmProcessSubType.hh"
-
+#include "mdomAnalysisManager.hh"
 #include "mdomScintillation.hh"
-
+extern MdomAnalysisManager gAnalysisManager;
 /////////////////////////
 // Class Implementation
 /////////////////////////
@@ -186,7 +186,9 @@ mdomScintillation::PostStepDoIt(const G4Track& aTrack, const G4Step& aStep)
 
         const G4DynamicParticle* aParticle = aTrack.GetDynamicParticle();
         const G4Material* aMaterial = aTrack.GetMaterial();
-
+	
+	//G4cout << aTrack.GetDefinition()->GetParticleName() << G4endl;
+	
         G4StepPoint* pPreStepPoint  = aStep.GetPreStepPoint();
         G4StepPoint* pPostStepPoint = aStep.GetPostStepPoint();
 
@@ -195,7 +197,9 @@ mdomScintillation::PostStepDoIt(const G4Track& aTrack, const G4Step& aStep)
         G4double      t0 = pPreStepPoint->GetGlobalTime();
 
         G4double TotalEnergyDeposit = aStep.GetTotalEnergyDeposit();
-
+	
+	//G4cout << TotalEnergyDeposit << G4endl;
+	
         G4MaterialPropertiesTable* aMaterialPropertiesTable =
                                aMaterial->GetMaterialPropertiesTable();
         if (!aMaterialPropertiesTable)
@@ -316,11 +320,12 @@ mdomScintillation::PostStepDoIt(const G4Track& aTrack, const G4Step& aStep)
            // The default linear scintillation process
            ScintillationYield = aMaterialPropertiesTable->
                                       GetConstProperty("SCINTILLATIONYIELD");
+				      
 
            // Units: [# scintillation photons / MeV]
 	G4ParticleDefinition *pDef = aParticle->GetDefinition();		      
 	if (pDef==G4Electron::ElectronDefinition() || pDef==G4Gamma::GammaDefinition()){
-
+	  //G4cout << "I got the yield "<< aMaterial->GetName() << " " ;###################################
 	  ScintillationYield = ScintillationYield*gElectronFactor;
            ScintillationYield *= YieldFactor;
 	   
@@ -344,26 +349,31 @@ mdomScintillation::PostStepDoIt(const G4Track& aTrack, const G4Step& aStep)
         // Birk's correction via emSaturation and specifying scintillation by
         // by particle type are physically mutually exclusive
 
-        if (scintillationByParticleType)
-           MeanNumberOfPhotons = ScintillationYield;
-        else if (emSaturation)
+        if (scintillationByParticleType){
+           MeanNumberOfPhotons = ScintillationYield;}
+        else if (emSaturation){
+	  
            MeanNumberOfPhotons = ScintillationYield*
-                              (emSaturation->VisibleEnergyDeposition(&aStep));
-        else
-           MeanNumberOfPhotons = ScintillationYield*TotalEnergyDeposit;
-
+                              (emSaturation->VisibleEnergyDeposition(&aStep));}
+        else{
+	  
+           MeanNumberOfPhotons = ScintillationYield*TotalEnergyDeposit;}
+           
+	   
         G4int NumPhotons;
 
         if (MeanNumberOfPhotons > 10.)
-        {
+        { 
           G4double sigma = ResolutionScale * std::sqrt(MeanNumberOfPhotons);
           NumPhotons = G4int(G4RandGauss::shoot(MeanNumberOfPhotons,sigma)+0.5);
+	  
         }
         else
         {
           NumPhotons = G4int(G4Poisson(MeanNumberOfPhotons));
+	  
         }
-
+	
         if (NumPhotons <= 0)
         {
            // return unchanged particle and no secondaries 
@@ -390,6 +400,11 @@ mdomScintillation::PostStepDoIt(const G4Track& aTrack, const G4Step& aStep)
         // new G4PhysicsOrderedFreeVector allocated to hold CII's
 
         G4int Num = NumPhotons;
+	
+	
+
+	
+	
 	//G4cout  <<  Num << G4endl;
 	
 	G4double FirstAmplitude = aMaterialPropertiesTable->GetConstProperty("FIRSTAMPLITUDE");
@@ -398,7 +413,43 @@ mdomScintillation::PostStepDoIt(const G4Track& aTrack, const G4Step& aStep)
 	G4double FirstTime   = aMaterialPropertiesTable->GetConstProperty("FIRSTTIME");
 	G4double SecondTime   = aMaterialPropertiesTable->GetConstProperty("SECONDTIME");
 	G4double ThirdTime   = aMaterialPropertiesTable->GetConstProperty("THIRDTIME");
+	
+	
+	G4double factor1 = FirstAmplitude/(FirstAmplitude+SecondAmplitude+ThirdAmplitude); 
+	G4double factor2 = SecondAmplitude/(FirstAmplitude+SecondAmplitude+ThirdAmplitude);
+	G4double factor3 = ThirdAmplitude/(FirstAmplitude+SecondAmplitude+ThirdAmplitude);
+	
+	std::vector<G4int> Nums;
+	Nums.push_back(G4int (round(factor1*NumPhotons)));
+	Nums.push_back(G4int (round(factor2*NumPhotons)));
+	Nums.push_back(G4int (round(factor3*NumPhotons)));
+	
+        G4int totalNr = Nums[0]+Nums[1]+Nums[2];
+	//test
+	if (totalNr != NumPhotons){
 
+	 if (NumPhotons == 1){
+	   G4double random_nr = G4UniformRand();
+	   if (random_nr < factor1) Nums[0] = 1;
+	   else if (random_nr < factor1+factor2) Nums[1] = 1;
+	   else Nums[2] = 1;
+	 }
+	else {
+	   G4double difference = totalNr - NumPhotons; 
+	   std::vector<G4double> diff;
+	   diff.push_back(Nums[0]-factor1*NumPhotons);
+	   diff.push_back(Nums[1]-factor2*NumPhotons);
+	   diff.push_back(Nums[2]-factor3*NumPhotons);
+	   for (G4int i = 1; i <= abs(difference); i++){
+	    G4int myindex = G4int(find(diff.begin(), diff.end(),  *std::max_element(diff.begin(),diff.end()))- diff.begin());
+	    Nums[myindex] -= G4int(difference*1/abs(difference));
+	    diff[myindex] = 0;     
+	   }
+	   }
+	}
+
+	
+	
         for (G4int scnt = 1; scnt <= nscnt; scnt++) {
 
             G4double ScintillationTime = 0.*ns;
@@ -406,33 +457,26 @@ mdomScintillation::PostStepDoIt(const G4Track& aTrack, const G4Step& aStep)
             G4PhysicsOrderedFreeVector* ScintillationIntegral = NULL;
 
             if (scnt == 1 && nscnt == 3) {
-              
-                 G4double myfactor = FirstAmplitude/(FirstAmplitude+SecondAmplitude+ThirdAmplitude); //FirstAmplitude*FirstTime/(FirstAmplitude*FirstTime+SecondAmplitude*SecondTime+ThirdAmplitude*ThirdTime);
-                 Num = G4int (myfactor*NumPhotons);
-                 //G4cout << myfactor << " " << Num << " f"<< G4endl;
+                  
+                 Num = Nums[0];
+                 //G4cout << NumPhotons<< " scnt1 " << myfactor << " " << Num << " " ;
+		 
                  ScintillationTime   =  FirstTime;
                  ScintillationIntegral = (G4PhysicsOrderedFreeVector*)((*firstIntegralTable)(materialIndex));
 	    }
 	      
             else if (scnt == 2 && nscnt == 3){
-	       G4double myfactor = SecondAmplitude/(FirstAmplitude+SecondAmplitude+ThirdAmplitude);//SecondAmplitude*SecondTime/(FirstAmplitude*FirstTime+SecondAmplitude*SecondTime+ThirdAmplitude*ThirdTime);
 	       
-               Num = G4int (myfactor*NumPhotons);
-	       //G4cout << myfactor << " " << Num << " s"<< G4endl;
+               Num = Nums[1];
+	       //G4cout <<  "scnt2 " << myfactor << " " << Num << " ";
                ScintillationTime   =  SecondTime;
 	       
                ScintillationIntegral = (G4PhysicsOrderedFreeVector*)((*secondIntegralTable)(materialIndex));   
 	    }
 	    else if (scnt == 3 && nscnt == 3){
-	       /*G4double temp1 = FirstAmplitude*FirstTime/(FirstAmplitude*FirstTime+SecondAmplitude*SecondTime+ThirdAmplitude*ThirdTime);
-	       G4double temp2 = SecondAmplitude*SecondTime/(FirstAmplitude*FirstTime+SecondAmplitude*SecondTime+ThirdAmplitude*ThirdTime);
-	       
-	       G4int Numf = G4int (temp1*NumPhotons) + G4int (temp2*NumPhotons);
-	       Num = NumPhotons - Numf;*/
-	       
-	       G4double myfactor = ThirdAmplitude/(FirstAmplitude+SecondAmplitude+ThirdAmplitude);//ThirdAmplitude*ThirdTime/(FirstAmplitude*FirstTime+SecondAmplitude*SecondTime+ThirdAmplitude*ThirdTime);
-	       Num = G4int (myfactor*NumPhotons);
-	       //G4cout << Num << " t"<< G4endl;
+
+	       Num = Nums[2];
+
                ScintillationTime   =   ThirdTime;
 	       
                ScintillationIntegral = (G4PhysicsOrderedFreeVector*)((*thirdIntegralTable)(materialIndex));

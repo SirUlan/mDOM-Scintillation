@@ -22,7 +22,7 @@ private:
   int divide(std::vector<MdomAnalysisManager::photonHit>& array, int start, int end) ;
   void HitKiller(std::vector<MdomAnalysisManager::photonHit>& allHits);
   bool triggerAcceptanceKiller();
-  void MotherFinder(std::vector<MdomAnalysisManager::photonHit>& HitVector, std::vector<MdomAnalysisManager::particle>& particles);
+  void MotherFinder(std::vector<MdomAnalysisManager::photonHit>& HitVector, std::vector<MdomAnalysisManager::particle>& particles, std::vector<MdomAnalysisManager::uniqueIsotopes>& isotopeUnique);
   void HitsProcessCounter(G4int& CerenkovCounter, G4int& ScintCounter, std::vector<G4int>& , std::vector<G4String>& creationProcess , std::vector<MdomAnalysisManager::photonHit>& allHits);
   void addTTS(std::vector<MdomAnalysisManager::photonHit>& HitVector);
   void eraseFirstTime(std::vector<MdomAnalysisManager::photonHit>& HitVector);

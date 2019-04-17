@@ -10,6 +10,9 @@
 #include "G4Trajectory.hh"
 #include "G4ios.hh"
 #include "G4RunManager.hh"
+#include <ctime>
+#include <time.h>
+#include <sys/time.h>
 //#include "TH1.h"
 extern G4int gDecayConditional;
 extern MdomAnalysisManager gAnalysisManager;
@@ -30,6 +33,8 @@ void mdomEventAction::BeginOfEventAction(const G4Event* evt)
 { gDecayConditional=0;
   gAnalysisManager.current_event_id = evt->GetEventID();
   gAnalysisManager.ResetEvent();
+  
+
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......ooOO0OOooo........oooOO0OOooo......
@@ -54,8 +59,10 @@ void mdomEventAction::EndOfEventAction(const G4Event* evt)
   
   
   gPMTAnalysis.Analysis();
+  gAnalysisManager.hits_all_events.insert(gAnalysisManager.hits_all_events.end(), gAnalysisManager.atPhotocathode.begin(), gAnalysisManager.atPhotocathode.end());
+  gAnalysisManager.Reset();
   
-  
+  /*
   if (gHittype == "onlyHits") {
     gAnalysisManager.WriteAccept();
   }
@@ -63,9 +70,9 @@ void mdomEventAction::EndOfEventAction(const G4Event* evt)
   if (gHittype == "detailed") {
     gAnalysisManager.WriteDetailPhotons(); 
     //gAnalysisManager.WriteMotherDecay();
-    //gAnalysisManager.WriteAccept();
+    gAnalysisManager.WriteAccept();
   }
+  */
   
   
-  gAnalysisManager.Reset();
 }

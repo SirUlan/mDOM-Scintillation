@@ -41,7 +41,7 @@
 
 mdomPhysicsList::mdomPhysicsList():  G4VUserPhysicsList()
 {
-  defaultCutValue = 0.1*mm;
+  defaultCutValue = 1e-4*m;
   SetVerboseLevel(0);
 }
 

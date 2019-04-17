@@ -12,11 +12,15 @@
 #include <vector>
 #include <iostream>
 
+
+
 extern MdomAnalysisManager gAnalysisManager;
 extern G4int gPMT;
 extern G4int gQE;
 extern G4int gDOM;
 extern std::vector<double> readColumnDouble (G4String fn, int col);
+
+
 
 bool sortByTime(const MdomAnalysisManager::photonHit & x, const MdomAnalysisManager::photonHit & y) {
   return x.stats_hit_time < y.stats_hit_time;
@@ -51,8 +55,8 @@ void mdomPMT::loadThePMTInfo(){
     QEfile = "../QEFiles/DOM.cfg";
     G4cout << "Time Response and QE for Hamamatsu R7081-02 (DOM)" << G4endl;
     TransitTime = 0*62*ns;
-    TTS = 3.4;
-    detectionProbability = 0.0;                               // Probability that the photon will not be registered.
+    TTS = 3.0;
+    detectionProbability = 1.0;                               // Probability that the photon will not be registered.
   }
   
   else if (gPMT == 0){
@@ -172,13 +176,15 @@ void mdomPMT::eraseFirstTime(std::vector<MdomAnalysisManager::photonHit>& HitVec
 //#########################################################################################################################
 
 //This function makes a list of the mother nucleus that caused the hit.
-void mdomPMT::MotherFinder(std::vector<MdomAnalysisManager::photonHit>& HitVector, std::vector<MdomAnalysisManager::particle>& particles)
+void mdomPMT::MotherFinder(std::vector<MdomAnalysisManager::photonHit>& HitVector, std::vector<MdomAnalysisManager::particle>& particles, std::vector<MdomAnalysisManager::uniqueIsotopes>& isotopeUnique)
 { G4int numberofHits = HitVector.size();
-  
+  G4double eventDuration = 60.*s;
   if (DecayMode){
-    for (int i = 0; i < (int) numberofHits; i++) {      
+    for (int i = 0; i < (int) numberofHits; i++) {    
+
       for (int j = 0; j < (int) particles.size(); j++){
 	if (HitVector.at(i).photonParent == particles.at(j).particlesIDs){
+	  
 	  MOTHERFINDER2:
 	  if((particles.at(j).particlesType != "nucleus")||(particles.at(j).particlesNames == "alpha"))
 	  {
@@ -192,8 +198,11 @@ void mdomPMT::MotherFinder(std::vector<MdomAnalysisManager::photonHit>& HitVecto
 	    }
 	  }
 	  else
-	  {
+	    
+	  { 
+
 	    HitVector.at(i).hitMotherName = particles.at(j).particlesNames;
+	    HitVector.at(i).stats_hit_time = HitVector.at(i).stats_hit_time + particles.at(j).randomNr*eventDuration;
 	    break;
 	  }
 	  
@@ -298,8 +307,10 @@ void mdomPMT::HitsProcessCounter(G4int& CerenkovCounter, G4int& ScintCounter, st
   if(allHits.at(i).realHit ==1 || allHits.at(i).realHit ==2 || allHits.at(i).realHit ==-1){
     G4int myindex = find(photonIds.begin(), photonIds.end(),allHits.at(i).hitPhotonID)- photonIds.begin(); 
     if (creationProcess.at(myindex) =="c"){
+      allHits.at(i).originProcess = "c";
       CerenkovCounter++;}
       if (creationProcess.at(myindex) =="s"){
+	allHits.at(i).originProcess = "s";
 	ScintCounter++;}
   }
 }  
@@ -461,6 +472,9 @@ bool mdomPMT::triggerAcceptanceKiller()
   }
 }
 
+
+
+
 //#########################################################################################################################
 
 // This function runs all the functions above. 
@@ -471,22 +485,25 @@ void mdomPMT::Analysis() {
   gAnalysisManager.totalRC=0;
   gAnalysisManager.totalRS=0;	
 
-  addTTS(gAnalysisManager.atPhotocathode);
+  //addTTS(gAnalysisManager.atPhotocathode);
 
   sort(gAnalysisManager.atPhotocathode.begin(), gAnalysisManager.atPhotocathode.end(), sortByTime);
 
   eraseFirstTime(gAnalysisManager.atPhotocathode);
 
-  MotherFinder(gAnalysisManager.atPhotocathode, gAnalysisManager.allParticles);
+  MotherFinder(gAnalysisManager.atPhotocathode, gAnalysisManager.allParticles, gAnalysisManager.uniIsotopes);
 
-  HitsProcessCounter(gAnalysisManager.totalC, gAnalysisManager.totalS, gAnalysisManager.photonIds, gAnalysisManager.creationProcess , gAnalysisManager.atPhotocathode);
+  //eraseFirstTime(gAnalysisManager.atPhotocathode);
 
-  HitKiller(gAnalysisManager.atPhotocathode);
+  //HitsProcessCounter(gAnalysisManager.totalC, gAnalysisManager.totalS, gAnalysisManager.photonIds, gAnalysisManager.creationProcess , gAnalysisManager.atPhotocathode);
+
+  //HitKiller(gAnalysisManager.atPhotocathode);
 
   //WaveAmplitudeHitKiller(gAnalysisManager.atPhotocathode);
 
   
-  HitsProcessCounter(gAnalysisManager.totalRC, gAnalysisManager.totalRS, gAnalysisManager.photonIds, gAnalysisManager.creationProcess , gAnalysisManager.atPhotocathode);
+  //HitsProcessCounter(gAnalysisManager.totalRC, gAnalysisManager.totalRS, gAnalysisManager.photonIds, gAnalysisManager.creationProcess , gAnalysisManager.atPhotocathode);
+  
   
 }
 //#########################################################################################################################

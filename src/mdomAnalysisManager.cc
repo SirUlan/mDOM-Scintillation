@@ -3,11 +3,15 @@
 //since Geant4.10: include units manually
 #include "G4SystemOfUnits.hh"
 #include "Randomize.hh"
+#include "mdomPMT.hh"
 MdomAnalysisManager::MdomAnalysisManager(){
 }
 
 MdomAnalysisManager::~MdomAnalysisManager(){}
 
+bool sortByTime_ana(const MdomAnalysisManager::photonHit & x, const MdomAnalysisManager::photonHit & y) {
+  return x.stats_hit_time < y.stats_hit_time;
+}
 
 void MdomAnalysisManager::ResetEvent()
 {	
@@ -23,21 +27,24 @@ void MdomAnalysisManager::ResetEvent()
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......ooOO0OOooo........oooOO0OOooo......
 // -------------------------------------------WRITE FUNCTIONS----------------------------------------------------
 void MdomAnalysisManager::WriteDetailPhotons()
-{           for (int i = 0; i < (int) atPhotocathode.size(); i++) {
+{           
+  for (int i = 0; i < (int) hits_all_events.size(); i++) {
+  datafile << std::setprecision(15);
 if (true) {
 
   //datafile << "# event#     Name Mother Nucleus    hit time/ns  flight time/ns  track length/m  energy/eV PMT#  event distance/m  photon position[m]: x,y,z  direction: x,y,z r[m] ParentId"<<G4endl;		 
   //datafile << atPhotocathode.at(i).stats_event_id << "\t";
   //datafile << stats_mothername.at(i) << "\t";
-  datafile << atPhotocathode.at(i).stats_hit_time << "\t";
+  datafile << hits_all_events.at(i).stats_hit_time << "\t";
   //datafile << stats_photon_flight_time.at(i) << "\t";
   //datafile << stats_photon_track_length.at(i) << "\t";
   //datafile << stats_photon_energy.at(i) << "\t";
   //datafile << photonAmplitude.at(i) << "\t";
     //datafile << atPhotocathode.at(i).Amplitude << "\t";
     //datafile << atPhotocathode.at(i).realHit << "\t";
-  datafile << atPhotocathode.at(i).stats_PMT_hit<< "\t";
-    datafile << atPhotocathode.at(i).hitMotherName << "\t" ;
+  datafile << hits_all_events.at(i).stats_PMT_hit<< "\t";
+   datafile << hits_all_events.at(i).hitMotherName <<  G4endl;
+    //datafile << hits_all_events.at(i).originProcess << "\t" ;
   //datafile << stats_event_distance.at(i) << "\t";
   //datafile << stats_photon_Xposition.at(i)/m << "\t";
   //datafile << stats_photon_Yposition.at(i)/m << "\t";
@@ -60,6 +67,37 @@ if (true) {
   
 }
 datafile << G4endl;
+}
+
+
+void MdomAnalysisManager::WriteMultiplicity()
+{ sort(hits_all_events.begin(), hits_all_events.end(), sortByTime_ana);
+  int	multiplicity[24] = {0};
+  for (int i = 0; i < (int) hits_all_events.size()-1; i++) {
+    
+    int	pmthits[24] = {0};
+    pmthits[hits_all_events.at(i).stats_PMT_hit] = 1;
+    int sum = 0;
+    for (int j = i+1; j < (int) hits_all_events.size(); j++) {
+      
+      if ((hits_all_events.at(j).stats_hit_time -hits_all_events.at(i).stats_hit_time)>20*ns) {
+	break;
+      }
+      else if (hits_all_events.at(j).stats_PMT_hit != hits_all_events.at(i).stats_PMT_hit){
+	pmthits[hits_all_events.at(j).stats_PMT_hit] = 1;
+      }
+    }
+    for (int k = 0; k < 24; k++) {
+      
+      sum += pmthits[k];
+    }
+    multiplicity[sum-1] +=1;	 
+  }
+  
+  for (int k = 0; k < 24; k++) {
+    datafile << multiplicity[k] << "\t" ;
+  }
+  datafile << G4endl;
 }
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......ooOO0OOooo........oooOO0OOooo......
 void MdomAnalysisManager::WriteMotherDecay()
@@ -120,4 +158,5 @@ void MdomAnalysisManager::Reset()
   NrScintillationVec.clear();
   photonIds.clear();
   creationProcess.clear();  
+  uniIsotopes.clear();
 }

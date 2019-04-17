@@ -17,6 +17,7 @@ public:
   void Reset();
   void WriteDetailPhotons();
   void WriteMotherDecay();
+  void WriteMultiplicity();
   void WriteAccept();
   void ResetEvent();
   
@@ -64,6 +65,7 @@ public:
     G4ThreeVector	stats_photon_position;
     G4String	hitMotherName;
     G4int	Amplitude;
+    G4String	originProcess;
   };
   
   struct particle{
@@ -71,6 +73,7 @@ public:
     G4String particlesNames;
     G4String particlesType;
     G4int parentParticlesIDs;
+    G4double randomNr;
     //G4long	parents_event_id;
   };
   
@@ -79,6 +82,11 @@ public:
     G4double decayTheta;
     G4double decayPhi;
     G4double decayR;
+  };
+  
+    struct uniqueIsotopes{
+    G4String	Name;
+    G4double time;
   };
   
   
@@ -93,10 +101,14 @@ public:
   //struc vectors:
   std::vector<particle> allParticles;
   std::vector<photonHit> atPhotocathode;
+  std::vector<photonHit> hits_all_events;
   std::vector<decayIsotope> Decay;
+  std::vector<uniqueIsotopes> uniIsotopes;
   
 private:
   
 };
+
+bool sortByTime_ana( const MdomAnalysisManager::photonHit& x, const MdomAnalysisManager::photonHit& y);
 
 #endif

@@ -39,7 +39,7 @@ void mdomSteppingAction::UserSteppingAction(const G4Step* aStep)
   G4double Ekin;
   G4double t1, t2;
   G4double t3;
-  G4double killTime=10.*s;                                   //one week
+  G4double killTime=1e-6*s;                                   //one week
   G4Track* aTrack = aStep->GetTrack();
   
   
@@ -53,7 +53,7 @@ void mdomSteppingAction::UserSteppingAction(const G4Step* aStep)
   //------------------------------------------------------------------
   
   
-  
+
   // Find position of decay
   if ( ! gAnalysisManager.foundDecay ) {
     if ( aTrack->GetCreatorProcess() ) {
@@ -70,6 +70,10 @@ void mdomSteppingAction::UserSteppingAction(const G4Step* aStep)
   }
   
   
+
+  
+  
+  
   /*
    *  // Energie die in das Glass deponiert wird.
    *  if (( aStep->GetTotalEnergyDeposit() )&&((aStep-> GetPostStepPoint()->GetMaterial()->GetName() == "Vessel Glass"))) {
@@ -82,11 +86,11 @@ void mdomSteppingAction::UserSteppingAction(const G4Step* aStep)
   
   
   //force 'single' decay, kills every ion that does not have the ID 1 (your starting nucleus).
-  if ((fullChain==2)&&(aTrack->GetDefinition()->GetParticleType() == "nucleus")&&(aTrack->GetDefinition()->GetParticleName()!="alpha")&&(aTrack->GetTrackID() > 1)) {
-    if ( aTrack->GetTrackStatus() != fStopAndKill ) {
-      aTrack->SetTrackStatus(fStopAndKill);
-    }
-  }
+  //if ((fullChain==2)&&(aTrack->GetDefinition()->GetParticleType() == "nucleus")&&(aTrack->GetDefinition()->GetParticleName()!="alpha")&&(aTrack->GetTrackID() > 0)) {
+   // if ( aTrack->GetTrackStatus() != fStopAndKill ) {
+   //   aTrack->SetTrackStatus(fStopAndKill);
+  //  }
+  //}
   
   
   //Time restricted Decay
@@ -113,8 +117,8 @@ void mdomSteppingAction::UserSteppingAction(const G4Step* aStep)
   }
   
 
-  if ( aTrack-> GetCurrentStepNumber() > 50000) {
-    G4cout << "Al infinito y mas alla!!!!!" << G4endl;
+  if ( aTrack-> GetCurrentStepNumber() > 100000) {
+    G4cout << "Al infinito y mas alla!!!!!   " <<  aTrack->GetDefinition()->GetParticleName()  << " " << 1239.84193/(aTrack->GetKineticEnergy()/eV)<< G4endl;
     // gAnalysisManager.infiniteLoop = true;
     //gAnalysisManager.SaveThisEvent = true;
     if ( aTrack->GetTrackStatus() != fStopAndKill ) {
@@ -133,7 +137,8 @@ void mdomSteppingAction::UserSteppingAction(const G4Step* aStep)
     
     if ( aTrack->GetTrackStatus() != fStopAndKill ) {
 
-      if ( (aStep->GetPostStepPoint()->GetMaterial()->GetName() == "Photocathode")&&(aStep->GetPostStepPoint()->GetTouchableHandle()->GetVolume(3)->GetName() == "Glass_phys_2")&&(aTrack->GetTrackStatus() != fStopAndKill ) ) {
+     // if ( (aStep->GetPostStepPoint()->GetMaterial()->GetName() == "Photocathode")&&(aStep->GetPostStepPoint()->GetTouchableHandle()->GetVolume(3)->GetName() == "Glass_phys_2")&&(aTrack->GetTrackStatus() != fStopAndKill ) ) {
+if ( (aStep->GetPostStepPoint()->GetMaterial()->GetName() == "Photocathode")&&(aTrack->GetTrackStatus() != fStopAndKill ) ) {
 
 	G4double h = 4.136E-15*eV*s;
 	G4double c = 2.99792458E17*nm/s;
@@ -165,7 +170,9 @@ void mdomSteppingAction::UserSteppingAction(const G4Step* aStep)
 	    aTrack->GetMomentumDirection(),//stats_photon_direction
 	    aTrack->GetPosition(),//stats_photon_position
 	    "default", //Mother Particle Name yet not known.
-	    1}); // Amplitude 
+	    1,// Amplitude 
+	    "def_or"
+	  }); 
 	  
 	  aTrack->SetTrackStatus(fStopAndKill); // kills counted photon to prevent scattering and double-counting   
 	}

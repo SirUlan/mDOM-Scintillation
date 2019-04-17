@@ -62,7 +62,7 @@ G4double	gSourceRadius;
 G4double	gElectronFactor;
 G4int		gDecayConditional;
 G4int		gQE;
-
+G4int		gNucleus;
 // G4String	greffilename;
 
 G4bool		gKillAll;
@@ -129,6 +129,67 @@ std::vector<double> readColumnDouble (G4String fn, int col) {
 	return values;//values enthält den c. Wert aus fn (aus jeder Spalte,welche  nach 255 zeichen oder durch \n beendet wird?)
 }
 
+
+void Isotope_GPS(G4String Isotope) {
+  UI = G4UImanager::GetUIpointer();
+      if ( Isotope == "U238" ){
+      UI->ApplyCommand("/control/execute ../DecayFiles/IonGui/NoDecayTime/U238FC.gui");
+    }
+    if ( Isotope == "U235" ){
+      UI->ApplyCommand("/control/execute ../DecayFiles/IonGui/NoDecayTime/UFC.gui");
+    }
+    if ( Isotope == "Th232" ){
+      UI->ApplyCommand("/control/execute ../DecayFiles/IonGui/NoDecayTime/Th232FC.gui");
+    }
+    if ( Isotope == "K40" ){
+      UI->ApplyCommand("/control/execute ../DecayFiles/IonGui/NoDecayTime/K.gui");
+    }
+    
+    UI->ApplyCommand("/control/verbose  0");
+    UI->ApplyCommand("/run/verbose 0");
+    UI->ApplyCommand("/event/verbose    0");
+    UI->ApplyCommand("/tracking/verbose 0");
+    UI->ApplyCommand("/run/initialize");
+    UI->ApplyCommand("/process/em/fluo true");
+    UI->ApplyCommand("/process/em/auger true");
+    UI->ApplyCommand("/process/em/pixe true");
+    UI->ApplyCommand("/gps/particle GenericIon");
+
+    if ( Isotope == "U238" ){
+      UI->ApplyCommand("/gps/ion 92 238 0");
+      
+    }
+    if ( Isotope == "U235" ){
+      UI->ApplyCommand("/gps/ion 92 235 0");
+      
+    }
+    if ( Isotope == "Th232" ){
+      UI->ApplyCommand("/gps/ion 90 232 0");
+      
+    }
+    if ( Isotope == "K40" ){
+      UI->ApplyCommand("/gps/ion 19 40 0");
+      
+    }
+    UI->ApplyCommand("/mdomDECAYcmd/fullChain 1");
+    
+     //std::ostringstream osstring;
+    //osstring << -0.5*gdistanceToSource;
+    
+    //G4String halfz = osstring.str();
+    //G4cout << "Origin point for emission: 0 0 " << halfz << "\n\n\n" << G4endl;
+    UI->ApplyCommand("/gps/pos/centre 0 0 0 m");
+    //UI->ApplyCommand("/gps/particle e-");
+    //UI->ApplyCommand("/gps/ene/mono 1000 keV");
+    UI->ApplyCommand("/gps/pos/type Volume");
+    UI->ApplyCommand("/gps/pos/shape Sphere");
+    UI->ApplyCommand("/gps/pos/radius 240 mm");
+  //UI->ApplyCommand("/process/inactivate Scintillation");
+  //UI->ApplyCommand("/process/inactivate Cerenkov");
+    UI->ApplyCommand("/gps/ang/type iso");
+    UI->ApplyCommand("/gps/pos/confine Glass_phys");
+}
+
 int mdom_K40() {
         
 	
@@ -186,10 +247,37 @@ int mdom_K40() {
 	command << "/control/execute " << ggunfilename;
 	UI->ApplyCommand(command.str());
 	
-	if (gsimevents > 0) {
-		command.str("");
-		command << "/run/beamOn " << gsimevents;
-		UI->ApplyCommand(command.str());
+	G4double Activities[] = {0,61*13.,4.61*13,0.59*13,1.28*13};
+	G4int NrOfDecays[] = {0,0,0,0,0};
+	G4double TimeInterval = 60;
+	
+
+	G4String Decay_Isotopes[] = {"none","K40","U238","U235","Th232"};
+	G4String Isotope;
+	for ( int i = 0; i < (int) gsimevents; i++) {
+	  
+	for ( int k = 1; k < (int) 5; k++) {
+	 NrOfDecays[k] = G4int(G4Poisson(TimeInterval*Activities[k]));
+	 G4cout << NrOfDecays[k] << G4endl;
+	}
+	
+	
+	for ( int k = 1; k < (int) 5; k++) {
+	  Isotope = Decay_Isotopes[k];
+	  G4cout << "Simulating " <<  Isotope << " " << NrOfDecays[k] << G4endl;
+	  Isotope_GPS(Isotope);
+	  command.str("");
+	  command << "/run/beamOn "<< NrOfDecays[k];
+	  UI->ApplyCommand(command.str());
+	  
+	}
+	G4String name1= ghitsfilename;
+	gAnalysisManager.datafile.open(name1.c_str(), std::ios::out|std::ios::app);
+	gAnalysisManager.WriteMultiplicity();
+	//gAnalysisManager.WriteDetailPhotons();
+	
+	gAnalysisManager.hits_all_events.clear();
+	gAnalysisManager.datafile.close();
 	}
 	
 	// Opens new user interface prompt and visualization after simulation was run
@@ -239,9 +327,9 @@ int main(int argc,char *argv[])
 	struct arg_dbl	*SourceRadius	= arg_dbl0("rR", "SourceRadius", "<n>", "\t\t SourceRadius");
 	struct arg_dbl	*ElectronFactor	= arg_dbl0("fF", "ElectronFactor", "<n>", "\t\t ElectronFactor");
 	struct arg_lit	*help		= arg_lit0(NULL,"help","\t\tprint this help and exit");
-	
+	struct arg_int	*nucleus	= arg_int0(NULL,"nucleus","<n>","\t\t decay chain or isotope [1=K40, 2=U238, 3=U235, 4=Th232]");
 	struct arg_int *QE = arg_int0("qQ","QE","<n>","\t\tQuantum efficiency ON = 1 or off =0. Killing events. Default 0.");
-	struct arg_end  *end		= arg_end(21);
+	struct arg_end  *end		= arg_end(22);
 	
 	void* argtable[] = {worldsize, 
 						events, 
@@ -267,7 +355,8 @@ int main(int argc,char *argv[])
 						distanceToProbe,
 						SourceRadius,
 						ElectronFactor,
-						help, 
+						help,
+						nucleus,
 						QE,						
 						end};
 						
@@ -308,7 +397,7 @@ int main(int argc,char *argv[])
 	SourceRadius->dval[0] = 0.0;
 	ElectronFactor->dval[0] = 9.5;
 	QE->ival[0]=1;
-	
+	nucleus->ival[0] = 0;
 	/* Parse the command line as defined by argtable[] */
     nerrors = arg_parse(argc,argv,argtable);
 
@@ -365,6 +454,8 @@ int main(int argc,char *argv[])
 	gSourceRadius = SourceRadius->dval[0];
 	gElectronFactor = ElectronFactor->dval[0];
 	gQE = QE->ival[0];
+	
+	gNucleus = nucleus->ival[0];
 	
 	if (hittype->ival[0]==0){
 		gHittype = "onlyHits";

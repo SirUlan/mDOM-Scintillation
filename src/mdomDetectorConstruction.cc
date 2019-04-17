@@ -53,7 +53,7 @@ extern G4double gscintSpectrum;
 extern G4double gTemperature;
 extern G4double gdistanceToSource;
 extern G4double gSourceRadius;
-
+extern G4int	gNucleus;
 
 
 
@@ -244,7 +244,8 @@ G4VPhysicalVolume* mdomDetectorConstruction::Construct() {
   G4String Holder_color = Holder_colors[gHolderColor];
   G4String World_types[] = {"air", "ice", "spice"};
   G4String World_type = World_types[gEnvironment];	
-  
+  G4String Decay_Isotopes[] = {"none","K40","U238","U235","Th232"};
+  G4String Isotope = Decay_Isotopes[gNucleus];
   //	declare variables, including visualisation attributes
   int i,k;
   double pi = M_PI;
@@ -2697,7 +2698,7 @@ G4VPhysicalVolume* mdomDetectorConstruction::Construct() {
   // Wacker SilGel 612 A/B (from KM3NeT data)
   G4MaterialPropertiesTable* proptable_WackerGel = new G4MaterialPropertiesTable();
   
-  
+  /*
   proptable_WackerGel->AddConstProperty("SCINTILLATIONYIELD",0);
 
   
@@ -2715,10 +2716,10 @@ G4VPhysicalVolume* mdomDetectorConstruction::Construct() {
   proptable_WackerGel->AddConstProperty("THIRDTIME",0);
 
   proptable_WackerGel->AddConstProperty("RESOLUTIONSCALE", 1.0);
-  
+  */
   
   G4MaterialPropertiesTable* proptable_IceCubeGel = new G4MaterialPropertiesTable();
-
+/*
   proptable_IceCubeGel->AddConstProperty("SCINTILLATIONYIELD",0);
 
   
@@ -2736,7 +2737,7 @@ G4VPhysicalVolume* mdomDetectorConstruction::Construct() {
   proptable_IceCubeGel->AddConstProperty("THIRDTIME",ThirdTime_QSI[tempIndex]);
 
   proptable_IceCubeGel->AddConstProperty("RESOLUTIONSCALE", 1.0);
-  
+  */
   
   
   
@@ -2837,8 +2838,8 @@ G4VPhysicalVolume* mdomDetectorConstruction::Construct() {
   G4double innerRadiusOfTheTube = 0.*cm;
   G4double startAngleOfTheTube = 0.*deg;
   G4double spanningAngleOfTheTube = 360.*deg;
-  G4double gRadius = 3*m;
-  G4double gHeight = gdistanceToSource*m+0.5*m;
+  G4double gRadius = 1*m;
+  G4double gHeight = 2*m;
   
  World_solid = new G4Tubs("tracker_tube",innerRadiusOfTheTube,gRadius,gHeight,startAngleOfTheTube,spanningAngleOfTheTube);
     
@@ -3127,7 +3128,7 @@ G4VPhysicalVolume* mdomDetectorConstruction::Construct() {
   }
   
   
-  if (OM_type == "mDOM1") {
+  if (OM_type == "mDOM") {
     // Producing PMT & RefCone coordinates
     G4double PMT_theta[99], PMT_phi[99], PMT_x[99], PMT_y[99], PMT_z[99], RefCone_x[99], RefCone_y[99], RefCone_z[99]; 
     G4double PMT_rho;
@@ -3413,7 +3414,7 @@ G4VPhysicalVolume* mdomDetectorConstruction::Construct() {
   } // closing mDOM area
     
     
-      if (OM_type == "mDOM") {
+      if (OM_type == "two_mDOM") {
     // Producing PMT & RefCone coordinates
     G4double PMT_theta[99], PMT_phi[99], PMT_x[99], PMT_y[99], PMT_z[99], RefCone_x[99], RefCone_y[99], RefCone_z[99]; 
     G4double PMT_rho;
@@ -3448,8 +3449,8 @@ G4VPhysicalVolume* mdomDetectorConstruction::Construct() {
       }
       if (i>=20 && i<=23){
 	PMT_theta[i]=147.0*deg;
-	PMT_phi[i]=(22.5+(i-20)*90.0)*deg;
-	// 		PMT_phi[i]=(0+(i-20)*90.0)*deg;
+	//PMT_phi[i]=(22.5+(i-20)*90.0)*deg;//Verdreht
+ 		PMT_phi[i]=(0+(i-20)*90.0)*deg;
 	PMT_z_offset = - CylHigh;
       }
       
@@ -3603,7 +3604,7 @@ G4VPhysicalVolume* mdomDetectorConstruction::Construct() {
     // 			flipOM->rotateY(180*deg); // for hunting the bug...
     
     Glass_logical = new G4LogicalVolume (Glass_solid, Mat_Vessel_Glass, "Glass_log");
-    Glass_physical = new G4PVPlacement (flipOM, G4ThreeVector(0,0,0), Glass_logical, "Glass_phys", World_logical, false, 0);
+    Glass_physical = new G4PVPlacement (flipOM, G4ThreeVector(0,0,0.5*gdistanceToSource*m), Glass_logical, "Glass_phys", World_logical, false, 0);
     
     Gel_logical = new G4LogicalVolume (Gel_solid, Mat_Gel, "Gelcorpus logical");
     Gel_physical = new G4PVPlacement (0, G4ThreeVector(0,0,0), Gel_logical, "Gelcorpus physical", Glass_logical, false, 0);
@@ -3678,7 +3679,7 @@ G4VPhysicalVolume* mdomDetectorConstruction::Construct() {
     RefConeSurface = new G4LogicalSkinSurface("RefCone_skin", RefCone_12199_logical, RefCone_optical);
     
     
-    G4VPhysicalVolume* Glass_physical_2 = new G4PVPlacement (flipOM, G4ThreeVector(0,0,-gdistanceToSource*m), Glass_logical, "Glass_phys_2", World_logical, false, 0);
+    G4VPhysicalVolume* Glass_physical_2 = new G4PVPlacement (flipOM, G4ThreeVector(0,0,-0.5*gdistanceToSource*m), Glass_logical, "Glass_phys_2", World_logical, false, 0);
 
     
     
@@ -3698,6 +3699,8 @@ G4VPhysicalVolume* mdomDetectorConstruction::Construct() {
     RefCone_ETEL_logical->SetVisAttributes(PhotoCathode_vis);
     RefCone_12199_logical->SetVisAttributes(PhotoCathode_vis); 
     
+
+ 
   } // closing mDOM area
   
   if (OM_type == "PDOM") {
