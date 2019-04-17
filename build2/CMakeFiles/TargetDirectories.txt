@@ -1,3 +1,0 @@
-/home/m/m_unla02/Git-folder_Scintillation/build2/CMakeFiles/rebuild_cache.dir
-/home/m/m_unla02/Git-folder_Scintillation/build2/CMakeFiles/edit_cache.dir
-/home/m/m_unla02/Git-folder_Scintillation/build2/CMakeFiles/mdom_K40.dir
