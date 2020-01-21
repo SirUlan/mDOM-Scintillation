@@ -17,7 +17,7 @@ public:
   void Reset();
   void WriteDetailPhotons();
   void WriteMotherDecay();
-  void WriteMultiplicity();
+  void WriteMultiplicity(G4double timeWindow);
   void WriteAccept();
   void ResetEvent();
   
@@ -51,6 +51,8 @@ public:
   G4int OutOfWorldCounter;
   
   G4double energyDeposited;
+  G4bool secondDecayHappened;
+  G4double randTime;
   
   struct photonHit {
     G4long stats_event_id;

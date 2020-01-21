@@ -23,7 +23,9 @@
 #include "argtable2.h"
 #include <ctime>
 #include <sys/time.h>
+#include <time.h>
 
+#include "Randomize.hh"
 #include <sstream>
 #include <iostream>
 #include <fstream>
@@ -67,6 +69,7 @@ G4int		gNucleus;
 
 G4bool		gKillAll;
 G4long		current_event_id;
+G4double gSimulatedTime;
 
 struct timeval	gTime_Run_Start;
 struct timeval	gTime_Run_End;
@@ -132,19 +135,19 @@ std::vector<double> readColumnDouble (G4String fn, int col) {
 
 void Isotope_GPS(G4String Isotope) {
   UI = G4UImanager::GetUIpointer();
-      if ( Isotope == "U238" ){
-      UI->ApplyCommand("/control/execute ../DecayFiles/IonGui/NoDecayTime/U238FC.gui");
-    }
-    if ( Isotope == "U235" ){
-      UI->ApplyCommand("/control/execute ../DecayFiles/IonGui/NoDecayTime/UFC.gui");
-    }
-    if ( Isotope == "Th232" ){
-      UI->ApplyCommand("/control/execute ../DecayFiles/IonGui/NoDecayTime/Th232FC.gui");
-    }
-    if ( Isotope == "K40" ){
-      UI->ApplyCommand("/control/execute ../DecayFiles/IonGui/NoDecayTime/K.gui");
-    }
-    
+//       if ( Isotope == "U238" ){
+//       UI->ApplyCommand("/control/execute ../DecayFiles/IonGui/NoDecayTime/U238FC.gui");
+//     }
+//     if ( Isotope == "U235" ){
+//       UI->ApplyCommand("/control/execute ../DecayFiles/IonGui/NoDecayTime/UFC.gui");
+//     }
+//     if ( Isotope == "Th232" ){
+//       UI->ApplyCommand("/control/execute ../DecayFiles/IonGui/NoDecayTime/Th232FC.gui");
+//     }
+//     if ( Isotope == "K40" ){
+//       UI->ApplyCommand("/control/execute ../DecayFiles/IonGui/NoDecayTime/K.gui");
+//     }
+
     UI->ApplyCommand("/control/verbose  0");
     UI->ApplyCommand("/run/verbose 0");
     UI->ApplyCommand("/event/verbose    0");
@@ -180,14 +183,15 @@ void Isotope_GPS(G4String Isotope) {
     //G4cout << "Origin point for emission: 0 0 " << halfz << "\n\n\n" << G4endl;
     UI->ApplyCommand("/gps/pos/centre 0 0 0 m");
     //UI->ApplyCommand("/gps/particle e-");
-    //UI->ApplyCommand("/gps/ene/mono 1000 keV");
+    UI->ApplyCommand("/gps/ene/mono 0 eV");
     UI->ApplyCommand("/gps/pos/type Volume");
     UI->ApplyCommand("/gps/pos/shape Sphere");
-    UI->ApplyCommand("/gps/pos/radius 240 mm");
-  //UI->ApplyCommand("/process/inactivate Scintillation");
-  //UI->ApplyCommand("/process/inactivate Cerenkov");
+    UI->ApplyCommand("/gps/pos/radius 0.5 m");// 240 mm");
+    // UI->ApplyCommand("/process/inactivate Scintillation");
+// 
+//     UI->ApplyCommand("/process/inactivate Cerenkov");
     UI->ApplyCommand("/gps/ang/type iso");
-    UI->ApplyCommand("/gps/pos/confine Glass_phys");
+    UI->ApplyCommand("/gps/pos/confine World_phys"); //Glass_phys");
 }
 
 int mdom_K40() {
@@ -198,9 +202,9 @@ int mdom_K40() {
 
 	randseed = time_for_randy.tv_sec+4294*time_for_randy.tv_usec;
 
-	CLHEP::HepRandom::setTheEngine(new CLHEP::RanluxEngine(randseed,4));
-	
-	
+	//CLHEP::HepRandom::setTheEngine(new CLHEP::RanluxEngine(randseed,4));
+	//CLHEP::HepRandom::setTheEngine(new CLHEP::MixMaxRng);
+	CLHEP::HepRandom::setTheEngine(new CLHEP::MTwistEngine(randseed));
 	
 	std::stringstream command;
 
@@ -250,36 +254,58 @@ int mdom_K40() {
 	G4double Activities[] = {0,61*13.,4.61*13,0.59*13,1.28*13};
 	G4int NrOfDecays[] = {0,0,0,0,0};
 	G4double TimeInterval = 60;
-	
+	gSimulatedTime = TimeInterval*s;
 
-	G4String Decay_Isotopes[] = {"none","K40","U238","U235","Th232"};
+	G4String Decay_Isotopes[5] = {"none","K40","U238","U235","Th232"};
 	G4String Isotope;
+        
+        double startingtime= clock() / CLOCKS_PER_SEC;
 	for ( int i = 0; i < (int) gsimevents; i++) {
 	  
-	for ( int k = 1; k < (int) 5; k++) {
-	 NrOfDecays[k] = G4int(G4Poisson(TimeInterval*Activities[k]));
-	 G4cout << NrOfDecays[k] << G4endl;
-	}
-	
-	
-	for ( int k = 1; k < (int) 5; k++) {
-	  Isotope = Decay_Isotopes[k];
-	  G4cout << "Simulating " <<  Isotope << " " << NrOfDecays[k] << G4endl;
-	  Isotope_GPS(Isotope);
-	  command.str("");
-	  command << "/run/beamOn "<< NrOfDecays[k];
-	  UI->ApplyCommand(command.str());
-	  
-	}
-	G4String name1= ghitsfilename;
-	gAnalysisManager.datafile.open(name1.c_str(), std::ios::out|std::ios::app);
-	gAnalysisManager.WriteMultiplicity();
-	//gAnalysisManager.WriteDetailPhotons();
-	
+// 	for ( int k = 1; k < (int) 5; k++) {
+// 	 NrOfDecays[k] = G4int(G4Poisson(TimeInterval*Activities[k]));
+// 	 G4cout << NrOfDecays[k] << G4endl;
+// 	}
+// 	
+// 	
+// 	for ( int k = 1; k < (int) 5; k++) {
+// 	  Isotope = Decay_Isotopes[k];
+// 	  //G4cout << "Simulating " <<  Isotope << " " << NrOfDecays[k] << G4endl;
+// 	  Isotope_GPS(Isotope);
+//           command.str("");
+// 	  command << "/run/beamOn " << NrOfDecays[k];
+// 	  UI->ApplyCommand(command.str());
+//           
+// //           for (int l = 0; l <  NrOfDecays[k]; l++){
+// //               G4double tiii = (G4UniformRand()*gSimulatedTime)/ns;
+// // 
+// //           Isotope_GPS(Isotope);
+// //           //G4cout << "/gps/time "<< std::setprecision(20) << tiii/s << " s";//std::setprecision(20) << tiii/s  << "\t";
+// //           //command.str("");
+// // 	  //command << "/gps/time "<< std::setprecision(20) << tiii/ns << " ns" ;
+// //           //G4cout << command.str() << G4endl;
+// //           //UI->ApplyCommand(command.str());
+// //           command.str("");
+// // 	  command << "/run/beamOn 1";
+// // 	  UI->ApplyCommand(command.str());
+// //           }
+//           
+// 	  
+// 	}
+            
+        Isotope_GPS("K40");
+        command.str("");
+        command << "/run/beamOn 1";
+        UI->ApplyCommand(command.str());
+        G4String name1= ghitsfilename;
+	gAnalysisManager.datafileTest.open(name1.c_str(), std::ios::out|std::ios::app);
+	gAnalysisManager.WriteAccept();
 	gAnalysisManager.hits_all_events.clear();
-	gAnalysisManager.datafile.close();
+        gAnalysisManager.Reset();
+	gAnalysisManager.datafileTest.close();
 	}
-	
+	double finishtime=clock() / CLOCKS_PER_SEC;
+	G4cout << "Computation time: " << finishtime-startingtime << " seconds." << G4endl;
 	// Opens new user interface prompt and visualization after simulation was run
 	if (gInteractive){
 		int argumc = 1;

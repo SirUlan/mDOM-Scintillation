@@ -425,7 +425,7 @@ mdomScintillation::PostStepDoIt(const G4Track& aTrack, const G4Step& aStep)
 	Nums.push_back(G4int (round(factor3*NumPhotons)));
 	
         G4int totalNr = Nums[0]+Nums[1]+Nums[2];
-	//test
+	
 	if (totalNr != NumPhotons){
 
 	 if (NumPhotons == 1){

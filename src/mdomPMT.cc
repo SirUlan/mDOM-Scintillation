@@ -178,13 +178,12 @@ void mdomPMT::eraseFirstTime(std::vector<MdomAnalysisManager::photonHit>& HitVec
 //This function makes a list of the mother nucleus that caused the hit.
 void mdomPMT::MotherFinder(std::vector<MdomAnalysisManager::photonHit>& HitVector, std::vector<MdomAnalysisManager::particle>& particles, std::vector<MdomAnalysisManager::uniqueIsotopes>& isotopeUnique)
 { G4int numberofHits = HitVector.size();
-  G4double eventDuration = 60.*s;
   if (DecayMode){
     for (int i = 0; i < (int) numberofHits; i++) {    
 
       for (int j = 0; j < (int) particles.size(); j++){
 	if (HitVector.at(i).photonParent == particles.at(j).particlesIDs){
-	  
+
 	  MOTHERFINDER2:
 	  if((particles.at(j).particlesType != "nucleus")||(particles.at(j).particlesNames == "alpha"))
 	  {
@@ -200,9 +199,8 @@ void mdomPMT::MotherFinder(std::vector<MdomAnalysisManager::photonHit>& HitVecto
 	  else
 	    
 	  { 
-
 	    HitVector.at(i).hitMotherName = particles.at(j).particlesNames;
-	    HitVector.at(i).stats_hit_time = HitVector.at(i).stats_hit_time + particles.at(j).randomNr*eventDuration;
+
 	    break;
 	  }
 	  
@@ -484,12 +482,12 @@ void mdomPMT::Analysis() {
   gAnalysisManager.totalS=0;	
   gAnalysisManager.totalRC=0;
   gAnalysisManager.totalRS=0;	
+/*
+  addTTS(gAnalysisManager.hits_all_events);*/
 
-  //addTTS(gAnalysisManager.atPhotocathode);
+  //sort(gAnalysisManager.hits_all_events.begin(), gAnalysisManager.hits_all_events.end(), sortByTime);//sort(gAnalysisManager.atPhotocathode.begin(), gAnalysisManager.atPhotocathode.end(), sortByTime);
 
-  sort(gAnalysisManager.atPhotocathode.begin(), gAnalysisManager.atPhotocathode.end(), sortByTime);
-
-  eraseFirstTime(gAnalysisManager.atPhotocathode);
+  //eraseFirstTime(gAnalysisManager.hits_all_events);//eraseFirstTime(gAnalysisManager.atPhotocathode);
 
   MotherFinder(gAnalysisManager.atPhotocathode, gAnalysisManager.allParticles, gAnalysisManager.uniIsotopes);
 

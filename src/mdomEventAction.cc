@@ -20,7 +20,7 @@ extern mdomPMT gPMTAnalysis;
 
 extern G4String	ghitsfilename;
 extern G4String	gHittype;
-
+extern G4double gSimulatedTime;
 
 mdomEventAction::mdomEventAction()
 {}
@@ -33,7 +33,7 @@ void mdomEventAction::BeginOfEventAction(const G4Event* evt)
 { gDecayConditional=0;
   gAnalysisManager.current_event_id = evt->GetEventID();
   gAnalysisManager.ResetEvent();
-  
+ //G4cout  << evt->GetEventID() << G4endl;
 
 }
 
@@ -54,13 +54,26 @@ void mdomEventAction::EndOfEventAction(const G4Event* evt)
   //   I left it like it is,  for making the things easier if we want to change 
   //   the writing-time again,  but right now they are just 1-element-vectors.
 
-  gAnalysisManager.NrScintillationVec.push_back(gAnalysisManager.NrScintillation); 
-  gAnalysisManager.NrCerenkovVec.push_back(gAnalysisManager.NrCerenkov);
+//   gAnalysisManager.NrScintillationVec.push_back(gAnalysisManager.NrScintillation); 
+//   gAnalysisManager.NrCerenkovVec.push_back(gAnalysisManager.NrCerenkov);
+//   
   
-  
-  gPMTAnalysis.Analysis();
-  gAnalysisManager.hits_all_events.insert(gAnalysisManager.hits_all_events.end(), gAnalysisManager.atPhotocathode.begin(), gAnalysisManager.atPhotocathode.end());
-  gAnalysisManager.Reset();
+//   gPMTAnalysis.Analysis();
+//   gAnalysisManager.hits_all_events.insert(gAnalysisManager.hits_all_events.end(), gAnalysisManager.atPhotocathode.begin(), gAnalysisManager.atPhotocathode.end());
+//     G4String name1= ghitsfilename;
+//     gPMTAnalysis.Analysis();
+//     gAnalysisManager.datafile.open(name1.c_str(), std::ios::out|std::ios::app);
+//     //gAnalysisManager.WriteMultiplicity();
+//     gAnalysisManager.WriteDetailPhotons();
+//     
+// 
+//     gAnalysisManager.datafile.close();
+    
+//     if (gAnalysisManager.atPhotocathode.size() > (int) 0 ){ 
+//     gAnalysisManager.hits_all_events.insert(gAnalysisManager.hits_all_events.end(), gAnalysisManager.atPhotocathode.begin(), gAnalysisManager.atPhotocathode.end());
+//     }
+//     gAnalysisManager.Reset();
+
   
   /*
   if (gHittype == "onlyHits") {

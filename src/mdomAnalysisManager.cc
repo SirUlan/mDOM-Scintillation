@@ -28,22 +28,22 @@ void MdomAnalysisManager::ResetEvent()
 // -------------------------------------------WRITE FUNCTIONS----------------------------------------------------
 void MdomAnalysisManager::WriteDetailPhotons()
 {           
-  for (int i = 0; i < (int) hits_all_events.size(); i++) {
-  datafile << std::setprecision(15);
+  for (int i = 0; i < (int) atPhotocathode.size(); i++) {
+  datafile << std::setprecision(25);
 if (true) {
 
   //datafile << "# event#     Name Mother Nucleus    hit time/ns  flight time/ns  track length/m  energy/eV PMT#  event distance/m  photon position[m]: x,y,z  direction: x,y,z r[m] ParentId"<<G4endl;		 
   //datafile << atPhotocathode.at(i).stats_event_id << "\t";
   //datafile << stats_mothername.at(i) << "\t";
-  datafile << hits_all_events.at(i).stats_hit_time << "\t";
+  datafile << atPhotocathode.at(i).stats_hit_time/s << "\t";
   //datafile << stats_photon_flight_time.at(i) << "\t";
   //datafile << stats_photon_track_length.at(i) << "\t";
   //datafile << stats_photon_energy.at(i) << "\t";
   //datafile << photonAmplitude.at(i) << "\t";
     //datafile << atPhotocathode.at(i).Amplitude << "\t";
     //datafile << atPhotocathode.at(i).realHit << "\t";
-  datafile << hits_all_events.at(i).stats_PMT_hit<< "\t";
-   datafile << hits_all_events.at(i).hitMotherName <<  G4endl;
+  datafile << atPhotocathode.at(i).stats_PMT_hit<< "\t";
+   datafile << atPhotocathode.at(i).hitMotherName <<  G4endl;
     //datafile << hits_all_events.at(i).originProcess << "\t" ;
   //datafile << stats_event_distance.at(i) << "\t";
   //datafile << stats_photon_Xposition.at(i)/m << "\t";
@@ -66,24 +66,28 @@ if (true) {
   }
   
 }
-datafile << G4endl;
+// datafile << G4endl;
 }
 
 
-void MdomAnalysisManager::WriteMultiplicity()
+void MdomAnalysisManager::WriteMultiplicity(const G4double timeWindow)
 { sort(hits_all_events.begin(), hits_all_events.end(), sortByTime_ana);
   int	multiplicity[24] = {0};
+  int   mylastj = -1;
   for (int i = 0; i < (int) hits_all_events.size()-1; i++) {
-    
+    if (i < mylastj){
+        continue;
+    }
     int	pmthits[24] = {0};
     pmthits[hits_all_events.at(i).stats_PMT_hit] = 1;
     int sum = 0;
     for (int j = i+1; j < (int) hits_all_events.size(); j++) {
       
-      if ((hits_all_events.at(j).stats_hit_time -hits_all_events.at(i).stats_hit_time)>20*ns) {
+      if ((hits_all_events.at(j).stats_hit_time -hits_all_events.at(i).stats_hit_time)>timeWindow) {
+        mylastj = j;
 	break;
       }
-      else if (hits_all_events.at(j).stats_PMT_hit != hits_all_events.at(i).stats_PMT_hit){
+      else{
 	pmthits[hits_all_events.at(j).stats_PMT_hit] = 1;
       }
     }
@@ -121,9 +125,11 @@ void MdomAnalysisManager::WriteAccept()
   int	pmthits[25] = {0};
   int sum = 0;
   int alone = 0;
-
+  int pmtshit = 0;
+  for (int i = 0; i < (int) Decay.size(); i++) {
   
-  
+  datafileTest << Decay.at(i).decayR/m << "\t" ;
+    }
   // repacking hits:
   for (int i = 0; i < (int) atPhotocathode.size(); i++) {
 
@@ -136,11 +142,14 @@ void MdomAnalysisManager::WriteAccept()
   }
   // wrinting collective hits
   for (int j = 0; j < 24; j++) {
-   // datafileTest << "\t" << pmthits[j];
+   datafileTest << "\t" << pmthits[j];
     sum += pmthits[j];
+    if (pmthits[j]>0) {
+        pmtshit+=1;
+    }
     pmthits[j] = 0;
   }
-  datafileTest << "\t" << sum  << "\t" << alone <<"\t" << totalRC << "\t" << totalRS  ;
+  datafileTest << "\t" << sum  << "\t"  << pmtshit ; //<< alone <<"\t" << totalRC << "\t" << totalRS  ;
   datafileTest << G4endl;
 }
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......ooOO0OOooo........oooOO0OOooo......

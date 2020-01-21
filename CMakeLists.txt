@@ -17,16 +17,16 @@ endif()
 
 # try to use ROOT libraries
 #set (CMAKE_MODULE_PATH /Applic.ZIV/CentOS7/software/p0kapp/software/geant4/10.4.02.p01/lib64/Geant4-10.2.1/Modules/)
-set (CMAKE_MODULE_PATH /Applic.ZIV/CentOS7/software/p0kapp/software/geant4/4.09.06.p04/lib64/Geant4-9.6.4/Modules)
+set (CMAKE_MODULE_PATH /data/geant4/geant4.9.6.p04_install/lib/Geant4-9.6.4/Modules/)
 
-#list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
-#find_package(ROOT)
+# list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
+# find_package(ROOT)
 
 # sets search paths for include
 include(${Geant4_USE_FILE})
 include_directories(${PROJECT_SOURCE_DIR}/include)
 include_directories(${ROOT_INCLUDE_DIR})
-LINK_DIRECTORIES(/Applic.ZIV/CentOS7/software/p0kapp/software/lib)
+#LINK_DIRECTORIES(/Applic.ZIV/CentOS7/software/p0kapp/software/lib)
 
 # create list of all the files to compile
 file(GLOB sources ${PROJECT_SOURCE_DIR}/src/*.cc)

@@ -7,7 +7,7 @@
 #include "G4GammaConversion.hh"
 #include "G4PhotoElectricEffect.hh"
 
-#include "G4RadioactiveDecay.hh"
+#include "mdomRadioactiveDecay.hh"
 #include "G4DecayPhysics.hh"
 #include "G4Cerenkov.hh"
 #include "G4OpRayleigh.hh"
@@ -41,7 +41,7 @@
 
 mdomPhysicsList::mdomPhysicsList():  G4VUserPhysicsList()
 {
-  defaultCutValue = 1e-4*m;
+  defaultCutValue = 0.1*mm;
   SetVerboseLevel(0);
 }
 
@@ -182,11 +182,11 @@ void mdomPhysicsList::ConstructProcess()
       //pmanager->AddProcess(theScintProcess);
       }
 
-    if (theCerenkovProcess->IsApplicable(*particle)) {
-      //G4cout << "-----------------------------------Cerenkov :D-----------------------------------" << G4endl;
-      pmanager->AddProcess(theCerenkovProcess);
-      pmanager->SetProcessOrdering(theCerenkovProcess, idxPostStep);
-      }
+//     if (theCerenkovProcess->IsApplicable(*particle)) {
+//       //G4cout << "-----------------------------------Cerenkov :D-----------------------------------" << G4endl;
+//       pmanager->AddProcess(theCerenkovProcess);
+//       pmanager->SetProcessOrdering(theCerenkovProcess, idxPostStep);
+//       }
 
 
 

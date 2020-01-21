@@ -242,7 +242,7 @@ G4VPhysicalVolume* mdomDetectorConstruction::Construct() {
   G4String OM_type = OM_types[gDOM];	
   G4String Holder_colors[] = {"Black", "White"};
   G4String Holder_color = Holder_colors[gHolderColor];
-  G4String World_types[] = {"air", "ice", "spice"};
+  G4String World_types[] = {"air", "ice", "spice", "water"};
   G4String World_type = World_types[gEnvironment];	
   G4String Decay_Isotopes[] = {"none","K40","U238","U235","Th232"};
   G4String Isotope = Decay_Isotopes[gNucleus];
@@ -670,6 +670,158 @@ G4VPhysicalVolume* mdomDetectorConstruction::Construct() {
     0.970
   };
   
+  
+  G4double waterwv[44] = {
+    hc_eVnm /290*eV,
+    hc_eVnm /300*eV,
+    hc_eVnm /310*eV,
+    hc_eVnm /320*eV,
+    hc_eVnm /330*eV,
+    hc_eVnm /340*eV,
+    hc_eVnm /350*eV,
+    hc_eVnm /360*eV,
+    hc_eVnm /370*eV,
+    hc_eVnm /380*eV,
+    hc_eVnm /390*eV,
+    hc_eVnm /400*eV,
+    hc_eVnm /410*eV,
+    hc_eVnm /420*eV,
+    hc_eVnm /430*eV,
+    hc_eVnm /440*eV,
+    hc_eVnm /450*eV,
+    hc_eVnm /460*eV,
+    hc_eVnm /470*eV,
+    hc_eVnm /480*eV,
+    hc_eVnm /490*eV,
+    hc_eVnm /500*eV,
+    hc_eVnm /510*eV,
+    hc_eVnm /520*eV,
+    hc_eVnm /530*eV,
+    hc_eVnm /540*eV,
+    hc_eVnm /550*eV,
+    hc_eVnm /560*eV,
+    hc_eVnm /570*eV,
+    hc_eVnm /580*eV,
+    hc_eVnm /590*eV,
+    hc_eVnm /600*eV,
+    hc_eVnm /610*eV,
+    hc_eVnm /620*eV,
+    hc_eVnm /630*eV,
+    hc_eVnm /640*eV,
+    hc_eVnm /650*eV,
+    hc_eVnm /660*eV,
+    hc_eVnm /670*eV,
+    hc_eVnm /680*eV,
+    hc_eVnm /690*eV,
+    hc_eVnm /700*eV,
+    hc_eVnm /710*eV,
+    hc_eVnm /720*eV  
+  };
+  
+  G4double wateref[44] = {
+    1.3760556088 ,
+    1.37306159259,
+    1.37043011436,
+    1.36810402637,
+    1.36603671645,
+    1.36418992082,
+    1.3625320379 ,
+    1.36103681824,
+    1.35968233927,
+    1.35845019726,
+    1.35732486645,
+    1.3562931875 ,
+    1.35534395681,
+    1.35446759497,
+    1.35365587771,
+    1.35290171638,
+    1.35219897805,
+    1.35154233739,
+    1.35092715411,
+    1.35034937124,
+    1.34980543025,
+    1.3492922    ,
+    1.34880691708,
+    1.34834713541,
+    1.34791068371,
+    1.34749562927,
+    1.34710024718,
+    1.34672299399,
+    1.34636248514,
+    1.34601747562,
+    1.34568684322,
+    1.34536957407,
+    1.34506475021,
+    1.34477153862,
+    1.34448918183,
+    1.34421698962,
+    1.34395433182,
+    1.34370063191,
+    1.34345536153,
+    1.34321803552,
+    1.34298820758,
+    1.34276546647,
+    1.34254943262,
+    1.34233975506  
+  };
+  
+    G4double waterenergyabs[16] = {
+    hc_eVnm /290*eV,
+    hc_eVnm /310*eV,
+    hc_eVnm /330*eV,
+    hc_eVnm /350*eV,
+    hc_eVnm /375*eV,
+    hc_eVnm /412*eV,
+    hc_eVnm /440*eV,
+    hc_eVnm /475*eV,
+    hc_eVnm /488*eV,
+    hc_eVnm /510*eV,
+    hc_eVnm /532*eV,
+    hc_eVnm /555*eV,
+    hc_eVnm /650*eV,
+    hc_eVnm /676*eV,
+    hc_eVnm /715*eV,
+    hc_eVnm /720*eV  
+    };
+    
+    G4double waterabs[16] = {
+    0.0  *m ,
+    11.9  *m,
+    16.4  *m,
+    20.6  *m,
+    29.5  *m,
+    48.5  *m,
+    67.5  *m,
+    59.0  *m,
+    55.1  *m,
+    26.1  *m,
+    19.9  *m,
+    14.7  *m,
+    2.8   *m,
+    2.3   *m,
+    1.0   *m,
+    0.0   *m 
+    };
+    
+    G4double waterscat[16] = {
+      16.6*m,
+      20.2*m,
+      23.8*m,
+      27.6*m,
+      32.5*m,
+      40.2*m,
+      46.2*m,
+      53.9*m,
+      56.8*m,
+      61.8*m,
+      66.8*m,
+      72.1*m,
+      94.2*m,
+      100.3*m,
+      109.4*m,
+      109.4*m  
+    };
+  
   // Total98
   // hypopthetical material with R = 98% for all wavelengths, inpored by CTA ligth concentrators with additinal coating
   G4double T98PhotonEnergy[2] = {PHOTON_NRG_MIN, PHOTON_NRG_MAX};
@@ -729,6 +881,8 @@ G4VPhysicalVolume* mdomDetectorConstruction::Construct() {
   
   G4Material* Mat_Spice = new G4Material("Spice", 0.917*g/cm3, MatDatBase->FindOrBuildMaterial("G4_WATER"), kStateSolid, ambient_temperature, ambient_pressure);
   
+  G4Material* Mat_Water = new G4Material("Water", 1*g/cm3, MatDatBase->FindOrBuildMaterial("G4_WATER"), kStateSolid, (13+273.15)*kelvin, ambient_pressure);
+  
   G4Material* Mat_Vacuum = new G4Material("Vacuum", 0.3*1.290*mg/cm3, 1, kStateGas, ambient_temperature, 0.3*bar);
   Mat_Vacuum->AddMaterial(MatDatBase->FindOrBuildMaterial("G4_AIR"), 100.0*perCent);
   
@@ -777,7 +931,7 @@ G4VPhysicalVolume* mdomDetectorConstruction::Construct() {
   //	Ice Absorption
   G4double ABS_spice[NUMENTRIES_ICE]={};
   for (unsigned int u = 0; u < NUMENTRIES_ICE; u++) {
-    ABS_spice[u] = Spice_Absorption(u , 88); 
+    ABS_spice[u] = Spice_Absorption(u , Depth_pos); 
   }
   
   //	Ice refraction
@@ -800,6 +954,11 @@ G4VPhysicalVolume* mdomDetectorConstruction::Construct() {
   proptable_spice->AddConstProperty("MIEHG_BACKWARD",MIE_spice_const[1]);
   proptable_spice->AddConstProperty("MIEHG_FORWARD_RATIO",MIE_spice_const[2]);
   Mat_Spice->SetMaterialPropertiesTable(proptable_spice);
+  
+  G4MaterialPropertiesTable* proptable_water = new G4MaterialPropertiesTable();
+  proptable_water->AddProperty("RINDEX",waterwv, wateref,44);
+  proptable_water->AddProperty("ABSLENGTH",waterenergyabs, waterabs, 16);
+  Mat_Water->SetMaterialPropertiesTable(proptable_water);
   
   G4double BiAlkaliPhotonEnergy[2] = {PHOTON_NRG_MIN, PHOTON_NRG_MAX};
   G4double BiAlkaliAbsLen[2] = {1*mm, 1*mm};
@@ -1993,7 +2152,7 @@ G4VPhysicalVolume* mdomDetectorConstruction::Construct() {
     }
     
   };
-  proptable_VitrovexGlass->AddConstProperty("SCINTILLATIONYIELD",scintYield);
+  proptable_VitrovexGlass->AddConstProperty("SCINTILLATIONYIELD",0);
 
   
   proptable_VitrovexGlass->AddConstProperty("FIRSTAMPLITUDE",FirstCompomentAmplitude_VV[tempIndexVitro]);
@@ -2014,7 +2173,7 @@ G4VPhysicalVolume* mdomDetectorConstruction::Construct() {
 
   
   
-  proptable_KoppGlass->AddConstProperty("SCINTILLATIONYIELD",scintYield);
+  proptable_KoppGlass->AddConstProperty("SCINTILLATIONYIELD",0);
 
   proptable_KoppGlass->AddConstProperty("FIRSTAMPLITUDE",FirstCompomentAmplitude_Bt[tempIndex]);
   proptable_KoppGlass->AddConstProperty("SECONDAMPLITUDE",SecondCompomentAmplitude_Bt[tempIndex]);
@@ -2698,8 +2857,8 @@ G4VPhysicalVolume* mdomDetectorConstruction::Construct() {
   // Wacker SilGel 612 A/B (from KM3NeT data)
   G4MaterialPropertiesTable* proptable_WackerGel = new G4MaterialPropertiesTable();
   
-  /*
-  proptable_WackerGel->AddConstProperty("SCINTILLATIONYIELD",0);
+
+  proptable_WackerGel->AddConstProperty("SCINTILLATIONYIELD",scintYield);
 
   
   proptable_WackerGel->AddConstProperty("FIRSTAMPLITUDE",FirstCompomentAmplitude_Wacker[tempIndex]);
@@ -2716,7 +2875,7 @@ G4VPhysicalVolume* mdomDetectorConstruction::Construct() {
   proptable_WackerGel->AddConstProperty("THIRDTIME",0);
 
   proptable_WackerGel->AddConstProperty("RESOLUTIONSCALE", 1.0);
-  */
+
   
   G4MaterialPropertiesTable* proptable_IceCubeGel = new G4MaterialPropertiesTable();
 /*
@@ -2841,9 +3000,9 @@ G4VPhysicalVolume* mdomDetectorConstruction::Construct() {
   G4double gRadius = 1*m;
   G4double gHeight = 2*m;
   
- World_solid = new G4Tubs("tracker_tube",innerRadiusOfTheTube,gRadius,gHeight,startAngleOfTheTube,spanningAngleOfTheTube);
+ //World_solid = new G4Tubs("tracker_tube",innerRadiusOfTheTube,gRadius,gHeight,startAngleOfTheTube,spanningAngleOfTheTube);
     
-//World_solid = new G4Orb("World",gworldsize*m);
+ World_solid = new G4Orb("World",gworldsize*m);
   
   if (World_type == "air"){
     World_logical = new G4LogicalVolume(World_solid, Mat_LabAir, "World logical", 0, 0, 0);
@@ -2854,9 +3013,10 @@ G4VPhysicalVolume* mdomDetectorConstruction::Construct() {
   if (World_type == "spice"){
     World_logical = new G4LogicalVolume(World_solid, Mat_Spice, "World logical", 0, 0, 0);
   }
-  // 	if (World_type == "water"){
-  // 		World_logical = new G4LogicalVolume(World_solid, Mat_Water, "World logical", 0, 0, 0);
-  // 	}
+  	if (World_type == "water"){
+            G4cout << "Water selected ::::::::::::::::::::::::::::::::::::::::::::::::::" << G4endl;
+  		World_logical = new G4LogicalVolume(World_solid, Mat_Water, "World logical", 0, 0, 0);
+  	}
   
   G4RotationMatrix* rot;
   
@@ -3160,10 +3320,11 @@ G4VPhysicalVolume* mdomDetectorConstruction::Construct() {
 	PMT_z_offset = - CylHigh + MPMTzoffset;
 	PMT_r += MPMTroffset;
 	RefCone_r += MPMTroffset;
+        
       }
       if (i>=20 && i<=23){
 	PMT_theta[i]=147.0*deg;
-	PMT_phi[i]=(22.5+(i-20)*90.0)*deg;
+	PMT_phi[i]=(22.5*0+(i-20)*90.)*deg;
 	// 		PMT_phi[i]=(0+(i-20)*90.0)*deg;
 	PMT_z_offset = - CylHigh;
       }

@@ -23,10 +23,7 @@ mdomStackingAction::~mdomStackingAction() {}
 
 G4ClassificationOfNewTrack mdomStackingAction::ClassifyNewTrack(const G4Track * aTrack){
   
-  if (( aTrack->GetDefinition()->GetParticleName() == "nucleus")&&(aTrack->GetDefinition()->GetParticleName()!="alpha")&&(aTrack->GetTrackID() > 0)) {
-    G4cout << "blah" << G4endl;
-    
-  }
+
   //Count which process generated the optical photons
   if(aTrack->GetDefinition()->GetParticleName() == "opticalphoton"){
     // particle is optical photon
@@ -54,7 +51,7 @@ G4ClassificationOfNewTrack mdomStackingAction::ClassifyNewTrack(const G4Track * 
       aTrack->GetDefinition()->GetParticleName(), //particlesNames
       aTrack->GetDefinition()->GetParticleType(), // particlesType
       aTrack->GetParentID(),
-      G4UniformRand()
+      0
     });    //parentParticlesIDs
   }
   

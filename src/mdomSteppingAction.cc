@@ -55,9 +55,10 @@ void mdomSteppingAction::UserSteppingAction(const G4Step* aStep)
   
 
   // Find position of decay
-  if ( ! gAnalysisManager.foundDecay ) {
+if ( ! gAnalysisManager.foundDecay ) {
     if ( aTrack->GetCreatorProcess() ) {
       if ( aTrack->GetCreatorProcess()->GetProcessName() == "RadioactiveDecay" ) {
+
 	gAnalysisManager.foundDecay = true;
 	
 	gAnalysisManager.Decay.push_back({
@@ -67,7 +68,7 @@ void mdomSteppingAction::UserSteppingAction(const G4Step* aStep)
 	  aTrack->GetVertexPosition().getR()}); // decayR
       }
     }
-  }
+}
   
   
 
@@ -156,6 +157,8 @@ if ( (aStep->GetPostStepPoint()->GetMaterial()->GetName() == "Photocathode")&&(a
 	
 	if( (gQE==0) || ((gPMTAnalysis.QEcheck(lambda)) && (gQE==1))) {
 	  t1 = aTrack->GetGlobalTime();
+
+
 	  t2 = aTrack->GetLocalTime();	
 	  n = explode(aStep->GetPreStepPoint()->GetPhysicalVolume()->GetName(),'_');  
 	  gAnalysisManager.atPhotocathode.push_back({

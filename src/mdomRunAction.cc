@@ -21,7 +21,6 @@ mdomRunAction::~mdomRunAction(){}
 
 void mdomRunAction::BeginOfRunAction(const G4Run*) 
 { 
-  
   startingtime= clock() / CLOCKS_PER_SEC;
   // 	Open output data file
   // 	gAnalysisManager.datafile.open("../ana/data.txt".c_str(), std::ios::out|std::ios::out| std::ios_base::trunc);//out: zum schreiben, trunc: inhalt vor öffnen wird gelöscht
