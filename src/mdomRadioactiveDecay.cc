@@ -533,15 +533,11 @@ G4double G4RadioactiveDecay::GetDecayTime()
   while ( DProfile[i] < rand) i++;
   rand = G4UniformRand();
   decaytime = DBin[i] + rand*(DBin[i+1]-DBin[i]);
-  G4cout <<" Decay time: " <<decaytime/s <<"[s]" <<G4endl;
+  //G4cout <<" Decay time: " <<decaytime/s <<"[s]" <<G4endl;
 #ifdef G4VERBOSE
   if (GetVerboseLevel()>1)
     {G4cout <<" Decay time: " <<decaytime/s <<"[s]" <<G4endl;}
 #endif
-    
-  if (decaytime> gSimulatedTime)
-  { decaytime = rand*gSimulatedTime; }
-G4cout <<" Decay time: " <<decaytime/s <<"[s]" <<G4endl;
 
   return  decaytime;	    
 }
@@ -1562,17 +1558,7 @@ G4RadioactiveDecay::DecayIt(const G4Track& theTrack, const G4Step&)
     G4ThreeVector currentPosition;
     currentPosition = theTrack.GetPosition();
     
-//////////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////
-    if (finalGlobalTime < 1e-10*s)
-    {   G4double tmp = G4UniformRand()*gSimulatedTime;
-        finalGlobalTime = tmp;
-        finalLocalTime  = tmp;
-    }
-//////////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////
-        
-        
+
     // Check whether use Analogue or VR implementation
 
     if (AnalogueMC) {
@@ -1618,7 +1604,7 @@ G4RadioactiveDecay::DecayIt(const G4Track& theTrack, const G4Step&)
         
  //////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////
-        if (temptime+finalGlobalTime >gSimulatedTime)
+        if (temptime > 10e-3*s)
         {   
             temptime = G4UniformRand()*gSimulatedTime;
             //G4cout <<  std::setprecision(20) << temptime/s << G4endl;
@@ -1635,7 +1621,19 @@ G4RadioactiveDecay::DecayIt(const G4Track& theTrack, const G4Step&)
         }
         energyDeposit += theParticle->GetKineticEnergy();
       }
+      
+      	gAnalysisManager.foundDecay = true;
+	
 
+        
+	gAnalysisManager.Decay.push_back({
+	  gAnalysisManager.current_event_id, // NewMother_event_id
+          theParticleDef->GetParticleName(), //  decayTime
+                        finalGlobalTime / s,
+	  (theTrack.GetPosition()).x() /cm, //x
+	  (theTrack.GetPosition()).y() /cm, // y
+	  (theTrack.GetPosition()).z() /cm}); // z
+        
       products->Boost( ParentEnergy, ParentDirection);
 
 

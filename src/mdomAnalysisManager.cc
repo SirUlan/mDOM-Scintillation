@@ -28,12 +28,14 @@ void MdomAnalysisManager::ResetEvent()
 // -------------------------------------------WRITE FUNCTIONS----------------------------------------------------
 void MdomAnalysisManager::WriteDetailPhotons()
 {           
-  for (int i = 0; i < (int) atPhotocathode.size(); i++) {
-  datafile << std::setprecision(25);
-if (true) {
+
+    for (int i = 0; i < (int) atPhotocathode.size(); i++) {
+ 
+  datafile << std::setprecision(20);
+//if (atPhotocathode.at(i).Amplitude == 1) {
 
   //datafile << "# event#     Name Mother Nucleus    hit time/ns  flight time/ns  track length/m  energy/eV PMT#  event distance/m  photon position[m]: x,y,z  direction: x,y,z r[m] ParentId"<<G4endl;		 
-  //datafile << atPhotocathode.at(i).stats_event_id << "\t";
+  datafile << atPhotocathode.at(i).stats_event_id << "\t";
   //datafile << stats_mothername.at(i) << "\t";
   datafile << atPhotocathode.at(i).stats_hit_time/s << "\t";
   //datafile << stats_photon_flight_time.at(i) << "\t";
@@ -41,10 +43,13 @@ if (true) {
   //datafile << stats_photon_energy.at(i) << "\t";
   //datafile << photonAmplitude.at(i) << "\t";
     //datafile << atPhotocathode.at(i).Amplitude << "\t";
-    //datafile << atPhotocathode.at(i).realHit << "\t";
   datafile << atPhotocathode.at(i).stats_PMT_hit<< "\t";
+  //datafile << atPhotocathode.at(i).Amplitude << "\t";
+  datafile << std::setprecision(5);
+  datafile << atPhotocathode.at(i).stats_photon_energy<< "\t";
+  datafile << atPhotocathode.at(i).originProcess << "\t" ;
    datafile << atPhotocathode.at(i).hitMotherName <<  G4endl;
-    //datafile << hits_all_events.at(i).originProcess << "\t" ;
+
   //datafile << stats_event_distance.at(i) << "\t";
   //datafile << stats_photon_Xposition.at(i)/m << "\t";
   //datafile << stats_photon_Yposition.at(i)/m << "\t";
@@ -63,7 +68,7 @@ if (true) {
   //  }
  // }
 
-  }
+ // }
   
 }
 // datafile << G4endl;
@@ -110,11 +115,13 @@ void MdomAnalysisManager::WriteMotherDecay()
   for (int i = 0; i < (int) Decay.size(); i++) {
     
     datafileMother << Decay.at(i).NewMother_event_id << "\t";
-    datafileMother << Decay.at(i).decayTheta << "\t" ;
-    datafileMother << Decay.at(i).decayPhi << "\t" ;
-    datafileMother << Decay.at(i).decayR << "\t" ;
-    datafileMother << NrCerenkovVec.at(i) << "\t" ;
-    datafileMother << NrScintillationVec.at(i);                //<< "\t" << decayModus;
+    datafileMother << Decay.at(i).isotopename << "\t" ;
+    datafileMother << std::setprecision(20);
+    datafileMother << Decay.at(i).Decaytime << "\t" ;
+    datafileMother << std::setprecision(5);
+    datafileMother << Decay.at(i).x_pos << "\t" ;
+    datafileMother << Decay.at(i).y_pos << "\t" ;
+    datafileMother << Decay.at(i).z_pos << "\t" ;
     
     datafileMother << G4endl;
   }
@@ -125,11 +132,9 @@ void MdomAnalysisManager::WriteAccept()
   int	pmthits[25] = {0};
   int sum = 0;
   int alone = 0;
-  int pmtshit = 0;
-  for (int i = 0; i < (int) Decay.size(); i++) {
+
   
-  datafileTest << Decay.at(i).decayR/m << "\t" ;
-    }
+  
   // repacking hits:
   for (int i = 0; i < (int) atPhotocathode.size(); i++) {
 
@@ -142,14 +147,11 @@ void MdomAnalysisManager::WriteAccept()
   }
   // wrinting collective hits
   for (int j = 0; j < 24; j++) {
-   datafileTest << "\t" << pmthits[j];
+   // datafileTest << "\t" << pmthits[j];
     sum += pmthits[j];
-    if (pmthits[j]>0) {
-        pmtshit+=1;
-    }
     pmthits[j] = 0;
   }
-  datafileTest << "\t" << sum  << "\t"  << pmtshit ; //<< alone <<"\t" << totalRC << "\t" << totalRS  ;
+  datafileTest << "\t" << sum  << "\t" << alone <<"\t" << totalRC << "\t" << totalRS  ;
   datafileTest << G4endl;
 }
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......ooOO0OOooo........oooOO0OOooo......
@@ -159,7 +161,7 @@ void MdomAnalysisManager::WriteAccept()
 
 // Erase all the data for the next event.
 void MdomAnalysisManager::Reset()
-{
+{foundDecay = false;
   atPhotocathode.clear();
   Decay.clear();
   allParticles.clear();

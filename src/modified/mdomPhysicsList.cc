@@ -76,7 +76,7 @@ void mdomPhysicsList::ConstructProcess()
   G4Cerenkov* theCerenkovProcess = new G4Cerenkov("Cerenkov");
   theCerenkovProcess->SetTrackSecondariesFirst(false);
   theCerenkovProcess->SetMaxBetaChangePerStep(10.0);
-  theCerenkovProcess->SetMaxNumPhotonsPerStep(10000); 
+  theCerenkovProcess->SetMaxNumPhotonsPerStep(300); 
 
 
   //	The Livermore models

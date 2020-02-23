@@ -33,7 +33,7 @@ public:
   
   G4bool foundDecay;
   G4String MotherName;
-  
+  G4int lastEventNr;
   
   G4int NrScintillation;
   G4int NrCerenkov;
@@ -75,15 +75,15 @@ public:
     G4String particlesNames;
     G4String particlesType;
     G4int parentParticlesIDs;
-    G4double randomNr;
-    //G4long	parents_event_id;
   };
   
   struct decayIsotope{
     G4long	NewMother_event_id;
-    G4double decayTheta;
-    G4double decayPhi;
-    G4double decayR;
+    G4String isotopename;
+    G4double Decaytime;
+    G4double x_pos;
+    G4double y_pos;
+    G4double z_pos;
   };
   
     struct uniqueIsotopes{

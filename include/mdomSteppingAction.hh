@@ -23,6 +23,7 @@ class mdomSteppingAction : public G4UserSteppingAction
   private:
     SteppingMessenger*  fStepMessenger;
     G4int   fullChain;
+    G4double t3;
 
 
 		

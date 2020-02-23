@@ -56,16 +56,22 @@ void mdomSteppingAction::UserSteppingAction(const G4Step* aStep)
 
   // Find position of decay
 if ( ! gAnalysisManager.foundDecay ) {
+    
+      if  (( aTrack->GetTrackID() == 0)) {
+gAnalysisManager.foundDecay = true;
+
+    gAnalysisManager.allParticles.push_back({
+      aTrack->GetTrackID(), //particlesIDs
+      aTrack->GetDefinition()->GetParticleName(), //particlesNames
+      aTrack->GetDefinition()->GetParticleType(), // particlesType
+      aTrack->GetParentID()
+    });    //parentParticlesIDs
+  }
+    
+    
     if ( aTrack->GetCreatorProcess() ) {
       if ( aTrack->GetCreatorProcess()->GetProcessName() == "RadioactiveDecay" ) {
 
-	gAnalysisManager.foundDecay = true;
-	
-	gAnalysisManager.Decay.push_back({
-	  gAnalysisManager.current_event_id, // NewMother_event_id
-	  aTrack->GetVertexPosition().getTheta(), //decayTheta
-	  aTrack->GetVertexPosition().getPhi(), // decayPhi
-	  aTrack->GetVertexPosition().getR()}); // decayR
       }
     }
 }
@@ -132,13 +138,10 @@ if ( ! gAnalysisManager.foundDecay ) {
   
   //	Check if optical photon is about to hit a photocathode, if so, destroy it and save the hit
   if ( aTrack->GetDefinition()->GetParticleName() == "opticalphoton" ) {
-    //     if (aTrack->GetNextVolume()==0) {
-    //   		    gAnalysisManager.OutOfWorldCounter++;
-    //   		  }
-    
+
     if ( aTrack->GetTrackStatus() != fStopAndKill ) {
 
-     // if ( (aStep->GetPostStepPoint()->GetMaterial()->GetName() == "Photocathode")&&(aStep->GetPostStepPoint()->GetTouchableHandle()->GetVolume(3)->GetName() == "Glass_phys_2")&&(aTrack->GetTrackStatus() != fStopAndKill ) ) {
+     
 if ( (aStep->GetPostStepPoint()->GetMaterial()->GetName() == "Photocathode")&&(aTrack->GetTrackStatus() != fStopAndKill ) ) {
 
 	G4double h = 4.136E-15*eV*s;
@@ -154,8 +157,10 @@ if ( (aStep->GetPostStepPoint()->GetMaterial()->GetName() == "Photocathode")&&(a
 	//    gAnalysisManager.SaveThisEvent = true;
 	//    }
 	//-------------------------------------------------
-	
+	G4int alive = 0;
 	if( (gQE==0) || ((gPMTAnalysis.QEcheck(lambda)) && (gQE==1))) {
+            alive = 1;
+            
 	  t1 = aTrack->GetGlobalTime();
 
 
@@ -165,7 +170,7 @@ if ( (aStep->GetPostStepPoint()->GetMaterial()->GetName() == "Photocathode")&&(a
 	    gAnalysisManager.current_event_id, // stats_event_id
 	    aTrack->GetTrackID(), //hitPhotonID
 	    aTrack->GetParentID(), // photonParent
-	    1, // realHit
+	    alive, // realHit
 	    t1, // stats_hit_time
 	    t2, // stats_photon_flight_time
 	    Ekin/eV, // stats_photon_energy
@@ -173,12 +178,12 @@ if ( (aStep->GetPostStepPoint()->GetMaterial()->GetName() == "Photocathode")&&(a
 	    aTrack->GetMomentumDirection(),//stats_photon_direction
 	    aTrack->GetPosition(),//stats_photon_position
 	    "default", //Mother Particle Name yet not known.
-	    1,// Amplitude 
+	    alive,// Amplitude 
 	    "def_or"
 	  }); 
-	  
+	  }
 	  aTrack->SetTrackStatus(fStopAndKill); // kills counted photon to prevent scattering and double-counting   
-	}
+	
       }
     }
   }

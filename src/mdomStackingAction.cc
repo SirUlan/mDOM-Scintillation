@@ -50,8 +50,7 @@ G4ClassificationOfNewTrack mdomStackingAction::ClassifyNewTrack(const G4Track * 
       aTrack->GetTrackID(), //particlesIDs
       aTrack->GetDefinition()->GetParticleName(), //particlesNames
       aTrack->GetDefinition()->GetParticleType(), // particlesType
-      aTrack->GetParentID(),
-      0
+      aTrack->GetParentID()
     });    //parentParticlesIDs
   }
   

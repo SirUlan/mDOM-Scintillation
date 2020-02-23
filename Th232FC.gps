@@ -1,5 +1,5 @@
 
-/control/execute ../DecayFiles/IonGui/NoDecayTime/Th232FC.gui
+#/control/execute ../DecayFiles/IonGui/NoDecayTime/Th232FC.gui
 /control/verbose  0
 /run/verbose 0
 /event/verbose    0

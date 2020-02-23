@@ -178,6 +178,7 @@ void mdomPMT::eraseFirstTime(std::vector<MdomAnalysisManager::photonHit>& HitVec
 //This function makes a list of the mother nucleus that caused the hit.
 void mdomPMT::MotherFinder(std::vector<MdomAnalysisManager::photonHit>& HitVector, std::vector<MdomAnalysisManager::particle>& particles, std::vector<MdomAnalysisManager::uniqueIsotopes>& isotopeUnique)
 { G4int numberofHits = HitVector.size();
+//G4cout << particles.at(0).particlesIDs << G4endl;
   if (DecayMode){
     for (int i = 0; i < (int) numberofHits; i++) {    
 
@@ -302,7 +303,7 @@ void mdomPMT::HitKiller(std::vector<MdomAnalysisManager::photonHit>& allHits)
 // This function adds up the hits,  separating them by their creationProcess.
 void mdomPMT::HitsProcessCounter(G4int& CerenkovCounter, G4int& ScintCounter, std::vector<G4int>& photonIds, std::vector<G4String>& creationProcess , std::vector<MdomAnalysisManager::photonHit>& allHits )
 { for (int i = 0; i < (int) allHits.size(); i++) {
-  if(allHits.at(i).realHit ==1 || allHits.at(i).realHit ==2 || allHits.at(i).realHit ==-1){
+  if(true){//(allHits.at(i).realHit ==1 || allHits.at(i).realHit ==2 || allHits.at(i).realHit ==-1){
     G4int myindex = find(photonIds.begin(), photonIds.end(),allHits.at(i).hitPhotonID)- photonIds.begin(); 
     if (creationProcess.at(myindex) =="c"){
       allHits.at(i).originProcess = "c";
@@ -493,7 +494,7 @@ void mdomPMT::Analysis() {
 
   //eraseFirstTime(gAnalysisManager.atPhotocathode);
 
-  //HitsProcessCounter(gAnalysisManager.totalC, gAnalysisManager.totalS, gAnalysisManager.photonIds, gAnalysisManager.creationProcess , gAnalysisManager.atPhotocathode);
+  HitsProcessCounter(gAnalysisManager.totalC, gAnalysisManager.totalS, gAnalysisManager.photonIds, gAnalysisManager.creationProcess , gAnalysisManager.atPhotocathode);
 
   //HitKiller(gAnalysisManager.atPhotocathode);
 

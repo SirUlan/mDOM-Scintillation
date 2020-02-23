@@ -31,7 +31,7 @@ mdomEventAction::~mdomEventAction()
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......ooOO0OOooo........oooOO0OOooo......
 void mdomEventAction::BeginOfEventAction(const G4Event* evt)
 { gDecayConditional=0;
-  gAnalysisManager.current_event_id = evt->GetEventID();
+  gAnalysisManager.current_event_id = gAnalysisManager.lastEventNr+evt->GetEventID();
   gAnalysisManager.ResetEvent();
  //G4cout  << evt->GetEventID() << G4endl;
 
@@ -58,7 +58,7 @@ void mdomEventAction::EndOfEventAction(const G4Event* evt)
 //   gAnalysisManager.NrCerenkovVec.push_back(gAnalysisManager.NrCerenkov);
 //   
   
-//   gPMTAnalysis.Analysis();
+  gPMTAnalysis.Analysis();
 //   gAnalysisManager.hits_all_events.insert(gAnalysisManager.hits_all_events.end(), gAnalysisManager.atPhotocathode.begin(), gAnalysisManager.atPhotocathode.end());
 //     G4String name1= ghitsfilename;
 //     gPMTAnalysis.Analysis();
@@ -72,7 +72,7 @@ void mdomEventAction::EndOfEventAction(const G4Event* evt)
 //     if (gAnalysisManager.atPhotocathode.size() > (int) 0 ){ 
 //     gAnalysisManager.hits_all_events.insert(gAnalysisManager.hits_all_events.end(), gAnalysisManager.atPhotocathode.begin(), gAnalysisManager.atPhotocathode.end());
 //     }
-//     gAnalysisManager.Reset();
+    
 
   
   /*
@@ -87,5 +87,9 @@ void mdomEventAction::EndOfEventAction(const G4Event* evt)
   }
   */
   
-  
+
+	gAnalysisManager.WriteDetailPhotons(); //WriteMultiplicity(20*ns);
+	gAnalysisManager.WriteMotherDecay();
+
+        gAnalysisManager.Reset();
 }

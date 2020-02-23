@@ -186,12 +186,12 @@ void Isotope_GPS(G4String Isotope) {
     UI->ApplyCommand("/gps/ene/mono 0 eV");
     UI->ApplyCommand("/gps/pos/type Volume");
     UI->ApplyCommand("/gps/pos/shape Sphere");
-    UI->ApplyCommand("/gps/pos/radius 0.5 m");// 240 mm");
+    UI->ApplyCommand("/gps/pos/radius 240 mm");
     // UI->ApplyCommand("/process/inactivate Scintillation");
 // 
 //     UI->ApplyCommand("/process/inactivate Cerenkov");
     UI->ApplyCommand("/gps/ang/type iso");
-    UI->ApplyCommand("/gps/pos/confine World_phys"); //Glass_phys");
+    UI->ApplyCommand("/gps/pos/confine Glass_phys");
 }
 
 int mdom_K40() {
@@ -253,7 +253,7 @@ int mdom_K40() {
 	
 	G4double Activities[] = {0,61*13.,4.61*13,0.59*13,1.28*13};
 	G4int NrOfDecays[] = {0,0,0,0,0};
-	G4double TimeInterval = 60;
+	G4double TimeInterval = 5*60.;
 	gSimulatedTime = TimeInterval*s;
 
 	G4String Decay_Isotopes[5] = {"none","K40","U238","U235","Th232"};
@@ -262,47 +262,36 @@ int mdom_K40() {
         double startingtime= clock() / CLOCKS_PER_SEC;
 	for ( int i = 0; i < (int) gsimevents; i++) {
 	  
-// 	for ( int k = 1; k < (int) 5; k++) {
-// 	 NrOfDecays[k] = G4int(G4Poisson(TimeInterval*Activities[k]));
-// 	 G4cout << NrOfDecays[k] << G4endl;
-// 	}
-// 	
-// 	
-// 	for ( int k = 1; k < (int) 5; k++) {
-// 	  Isotope = Decay_Isotopes[k];
-// 	  //G4cout << "Simulating " <<  Isotope << " " << NrOfDecays[k] << G4endl;
-// 	  Isotope_GPS(Isotope);
+	for ( int k = 1; k < (int) 5; k++) {
+	 NrOfDecays[k] = G4int(G4Poisson(TimeInterval*Activities[k]));
+	 G4cout << NrOfDecays[k] << G4endl;
+	}
+	
+	gAnalysisManager.lastEventNr = 0;
+	for ( int k = 1; k < (int) 5; k++) {
+	  Isotope = Decay_Isotopes[k];
+	  //G4cout << "Simulating " <<  Isotope << " " << NrOfDecays[k] << G4endl;
+	  Isotope_GPS(Isotope);
+          command.str("");
+	  command << "/run/beamOn " << NrOfDecays[k];
+	  UI->ApplyCommand(command.str());
+          
+//           for (int l = 0; l <  NrOfDecays[k]; l++){
+//               G4double tiii = (G4UniformRand()*gSimulatedTime)/ns;
+// 
+//           Isotope_GPS(Isotope);
+//           //G4cout << "/gps/time "<< std::setprecision(20) << tiii/s << " s";//std::setprecision(20) << tiii/s  << "\t";
+//           //command.str("");
+// 	  //command << "/gps/time "<< std::setprecision(20) << tiii/ns << " ns" ;
+//           //G4cout << command.str() << G4endl;
+//           //UI->ApplyCommand(command.str());
 //           command.str("");
-// 	  command << "/run/beamOn " << NrOfDecays[k];
+// 	  command << "/run/beamOn 1";
 // 	  UI->ApplyCommand(command.str());
-//           
-// //           for (int l = 0; l <  NrOfDecays[k]; l++){
-// //               G4double tiii = (G4UniformRand()*gSimulatedTime)/ns;
-// // 
-// //           Isotope_GPS(Isotope);
-// //           //G4cout << "/gps/time "<< std::setprecision(20) << tiii/s << " s";//std::setprecision(20) << tiii/s  << "\t";
-// //           //command.str("");
-// // 	  //command << "/gps/time "<< std::setprecision(20) << tiii/ns << " ns" ;
-// //           //G4cout << command.str() << G4endl;
-// //           //UI->ApplyCommand(command.str());
-// //           command.str("");
-// // 	  command << "/run/beamOn 1";
-// // 	  UI->ApplyCommand(command.str());
-// //           }
-//           
-// 	  
-// 	}
-            
-        Isotope_GPS("K40");
-        command.str("");
-        command << "/run/beamOn 1";
-        UI->ApplyCommand(command.str());
-        G4String name1= ghitsfilename;
-	gAnalysisManager.datafileTest.open(name1.c_str(), std::ios::out|std::ios::app);
-	gAnalysisManager.WriteAccept();
-	gAnalysisManager.hits_all_events.clear();
-        gAnalysisManager.Reset();
-	gAnalysisManager.datafileTest.close();
+//           }
+
+	}
+
 	}
 	double finishtime=clock() / CLOCKS_PER_SEC;
 	G4cout << "Computation time: " << finishtime-startingtime << " seconds." << G4endl;
@@ -402,7 +391,7 @@ int main(int argc,char *argv[])
 	// set any command line default values prior to parsing
 	worldsize->dval[0] = 10.0;
 	events->ival[0] = 0;
-	gunfile->filename[0] = "mdom_K40.gps";
+	gunfile->filename[0] = "default.gps";
 	pmt->ival[0] = 0;	// use new R12199 as default
 	
 	glass->ival[0] = 0;	// use VITROVEX as default
